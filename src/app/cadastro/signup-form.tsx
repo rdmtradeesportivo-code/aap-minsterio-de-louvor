@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, MailCheck } from "lucide-react";
 import { signup, type AuthState } from "@/lib/actions/auth";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,13 @@ export function SignupForm() {
         <p className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-700">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {state.error}
+        </p>
+      )}
+
+      {state.info && (
+        <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
+          <MailCheck className="h-4 w-4 shrink-0" />
+          {state.info}
         </p>
       )}
 

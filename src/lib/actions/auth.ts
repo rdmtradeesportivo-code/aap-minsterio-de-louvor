@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export interface AuthState {
   error?: string;
+  info?: string;
 }
 
 export async function login(
@@ -23,6 +24,11 @@ export async function login(
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
+    if (error.code === "email_not_confirmed") {
+      return {
+        error: "Confirme seu e-mail antes de entrar. Veja o link que enviamos na sua caixa de entrada (ou spam).",
+      };
+    }
     return { error: "E-mail ou senha inválidos." };
   }
 
@@ -51,7 +57,7 @@ export async function signup(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -64,6 +70,12 @@ export async function signup(
       return { error: "Este e-mail já está cadastrado." };
     }
     return { error: "Não foi possível criar a conta. Tente novamente." };
+  }
+
+  if (!data.session) {
+    return {
+      info: "Conta criada! Confirme seu e-mail clicando no link que enviamos (verifique também o spam) e depois entre normalmente.",
+    };
   }
 
   redirect("/dashboard");
