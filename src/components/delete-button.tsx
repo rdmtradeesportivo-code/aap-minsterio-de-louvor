@@ -1,5 +1,8 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 export function DeleteButton({
   action,
   confirmMessage,
@@ -18,12 +21,10 @@ export function DeleteButton({
         }
       }}
     >
-      <button
-        type="submit"
-        className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-      >
+      <Button type="submit" variant="danger">
+        <Trash2 className="h-4 w-4" />
         {label}
-      </button>
+      </Button>
     </form>
   );
 }

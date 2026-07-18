@@ -1,12 +1,23 @@
 import Link from "next/link";
+import { Music4, CalendarDays, Users, ChevronRight, PlusCircle } from "lucide-react";
 import { listUpcomingServices } from "@/lib/data/services";
 import { getCurrentProfile } from "@/lib/data/profile";
 import { SERVICE_TYPE_LABELS } from "@/lib/types";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { buttonVariants } from "@/components/ui/button";
 
 function formatDate(dateStr: string) {
   const [year, month, day] = dateStr.split("-");
   return `${day}/${month}/${year}`;
 }
+
+const QUICK_LINKS = [
+  { href: "/dashboard/repertorio", label: "Repertório", description: "Músicas, cifras e letras", icon: Music4 },
+  { href: "/dashboard/cultos", label: "Cultos", description: "Roteiros e escalas", icon: CalendarDays },
+  { href: "/dashboard/equipe", label: "Equipe", description: "Membros do ministério", icon: Users },
+];
 
 export default async function DashboardHomePage() {
   const [{ profile }, upcoming] = await Promise.all([
@@ -15,71 +26,65 @@ export default async function DashboardHomePage() {
   ]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">
-          Olá, {profile.full_name?.split(" ")[0] || "!"}
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          Olá, {profile.full_name?.split(" ")[0] || "!"} 👋
         </h1>
-        <p className="text-sm text-slate-500">Bem-vindo(a) ao app do ministério de louvor.</p>
+        <p className="mt-1 text-sm text-slate-500">Bem-vindo(a) ao app do ministério de louvor.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Link
-          href="/dashboard/repertorio"
-          className="rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm"
-        >
-          <p className="text-sm font-semibold text-slate-900">🎼 Repertório</p>
-          <p className="mt-1 text-xs text-slate-500">Músicas, cifras e letras</p>
-        </Link>
-        <Link
-          href="/dashboard/cultos"
-          className="rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm"
-        >
-          <p className="text-sm font-semibold text-slate-900">📅 Cultos</p>
-          <p className="mt-1 text-xs text-slate-500">Roteiros e escalas</p>
-        </Link>
-        <Link
-          href="/dashboard/equipe"
-          className="rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm"
-        >
-          <p className="text-sm font-semibold text-slate-900">👥 Equipe</p>
-          <p className="mt-1 text-xs text-slate-500">Membros do ministério</p>
-        </Link>
+        {QUICK_LINKS.map((link) => (
+          <Link key={link.href} href={link.href}>
+            <Card hover className="p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50">
+                <link.icon className="h-5 w-5 text-violet-600" strokeWidth={1.75} />
+              </div>
+              <p className="mt-3 text-sm font-semibold text-slate-900">{link.label}</p>
+              <p className="mt-1 text-xs text-slate-500">{link.description}</p>
+            </Card>
+          </Link>
+        ))}
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
           Próximos cultos
         </h2>
         {upcoming.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-            Nenhum culto agendado. {" "}
-            <Link href="/dashboard/cultos/novo" className="text-indigo-600 hover:underline">
-              Criar um agora
-            </Link>
-          </p>
+          <EmptyState
+            icon={CalendarDays}
+            title="Nenhum culto agendado"
+            description="Crie o primeiro culto para montar o roteiro e a escala."
+            action={
+              <Link href="/dashboard/cultos/novo" className={buttonVariants({ size: "sm" })}>
+                <PlusCircle className="h-4 w-4" /> Criar culto
+              </Link>
+            }
+          />
         ) : (
-          <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+          <Card className="divide-y divide-slate-100">
             {upcoming.map((service) => (
-              <li key={service.id}>
-                <Link
-                  href={`/dashboard/cultos/${service.id}`}
-                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50"
-                >
-                  <div>
-                    <p className="font-medium text-slate-900">{service.title}</p>
-                    <p className="text-sm text-slate-500">
-                      {formatDate(service.service_date)}
-                      {service.service_time ? ` · ${service.service_time.slice(0, 5)}` : ""}
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-                    {SERVICE_TYPE_LABELS[service.type]}
-                  </span>
-                </Link>
-              </li>
+              <Link
+                key={service.id}
+                href={`/dashboard/cultos/${service.id}`}
+                className="flex items-center justify-between gap-4 px-5 py-4 transition-colors first:rounded-t-2xl last:rounded-b-2xl hover:bg-violet-50/40"
+              >
+                <div>
+                  <p className="font-semibold text-slate-900">{service.title}</p>
+                  <p className="text-sm text-slate-500">
+                    {formatDate(service.service_date)}
+                    {service.service_time ? ` · ${service.service_time.slice(0, 5)}` : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge color="violet">{SERVICE_TYPE_LABELS[service.type]}</Badge>
+                  <ChevronRight className="h-4 w-4 text-slate-300" />
+                </div>
+              </Link>
             ))}
-          </ul>
+          </Card>
         )}
       </section>
     </div>

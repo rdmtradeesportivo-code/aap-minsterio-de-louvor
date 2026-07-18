@@ -3,6 +3,7 @@ import { getService } from "@/lib/data/services";
 import { getCurrentProfile, canManage } from "@/lib/data/profile";
 import { updateService } from "@/lib/actions/services";
 import { ServiceForm } from "@/components/service-form";
+import { Card } from "@/components/ui/card";
 
 export default async function EditarCultoPage({
   params,
@@ -23,10 +24,10 @@ export default async function EditarCultoPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-bold text-slate-900">Editar culto</h1>
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900">Editar culto</h1>
+      <Card className="p-6">
         <ServiceForm action={updateServiceWithId} service={service} submitLabel="Salvar alterações" />
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,8 +1,11 @@
 "use client";
 
 import { useActionState } from "react";
+import { AlertCircle } from "lucide-react";
 import { updateOwnProfile } from "@/lib/actions/profiles";
 import type { Profile } from "@/lib/types";
+import { Input, Label } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const [state, formAction, pending] = useActionState(updateOwnProfile, {});
@@ -10,55 +13,35 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   return (
     <form action={formAction} className="space-y-4">
       <div>
-        <label htmlFor="full_name" className="block text-sm font-medium text-slate-700">
-          Nome completo
-        </label>
-        <input
-          id="full_name"
-          name="full_name"
-          defaultValue={profile.full_name}
-          required
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        />
+        <Label htmlFor="full_name">Nome completo</Label>
+        <Input id="full_name" name="full_name" defaultValue={profile.full_name} required />
       </div>
 
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-slate-700">
-          Telefone
-        </label>
-        <input
-          id="phone"
-          name="phone"
-          defaultValue={profile.phone ?? ""}
-          placeholder="(00) 00000-0000"
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        />
+        <Label htmlFor="phone">Telefone</Label>
+        <Input id="phone" name="phone" defaultValue={profile.phone ?? ""} placeholder="(00) 00000-0000" />
       </div>
 
       <div>
-        <label htmlFor="instruments" className="block text-sm font-medium text-slate-700">
-          Instrumentos / funções (separados por vírgula)
-        </label>
-        <input
+        <Label htmlFor="instruments">Instrumentos / funções (separados por vírgula)</Label>
+        <Input
           id="instruments"
           name="instruments"
           defaultValue={profile.instruments.join(", ")}
           placeholder="Ex: Vocal, Violão"
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
       </div>
 
       {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
+        <p className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          {state.error}
+        </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-60"
-      >
+      <Button type="submit" disabled={pending}>
         {pending ? "Salvando..." : "Salvar"}
-      </button>
+      </Button>
     </form>
   );
 }

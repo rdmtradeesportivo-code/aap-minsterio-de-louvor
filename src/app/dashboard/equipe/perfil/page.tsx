@@ -1,15 +1,16 @@
 import { getCurrentProfile } from "@/lib/data/profile";
 import { ProfileForm } from "@/components/profile-form";
+import { Card } from "@/components/ui/card";
 
 export default async function MeuPerfilPage() {
   const { profile } = await getCurrentProfile();
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-bold text-slate-900">Meu perfil</h1>
-      <div className="max-w-md rounded-xl border border-slate-200 bg-white p-5">
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900">Meu perfil</h1>
+      <Card className="max-w-md p-6">
         <ProfileForm profile={profile} />
-      </div>
+      </Card>
     </div>
   );
 }

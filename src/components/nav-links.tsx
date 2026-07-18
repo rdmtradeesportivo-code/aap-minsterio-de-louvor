@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, Music4, CalendarDays, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/dashboard", label: "Início" },
-  { href: "/dashboard/repertorio", label: "Repertório" },
-  { href: "/dashboard/cultos", label: "Cultos" },
-  { href: "/dashboard/equipe", label: "Equipe" },
+  { href: "/dashboard", label: "Início", icon: Home },
+  { href: "/dashboard/repertorio", label: "Repertório", icon: Music4 },
+  { href: "/dashboard/cultos", label: "Cultos", icon: CalendarDays },
+  { href: "/dashboard/equipe", label: "Equipe", icon: Users },
 ];
 
 export function NavLinks() {
@@ -25,13 +27,15 @@ export function NavLinks() {
           <Link
             key={link.href}
             href={link.href}
-            className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition ${
+            className={cn(
+              "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-colors",
               isActive
-                ? "bg-indigo-600 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
+                ? "bg-violet-50 text-violet-700"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            )}
           >
-            {link.label}
+            <link.icon className="h-4 w-4" strokeWidth={2} />
+            <span className="hidden sm:inline">{link.label}</span>
           </Link>
         );
       })}

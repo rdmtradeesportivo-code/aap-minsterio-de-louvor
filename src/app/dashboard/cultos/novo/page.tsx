@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile, canManage } from "@/lib/data/profile";
 import { createService } from "@/lib/actions/services";
 import { ServiceForm } from "@/components/service-form";
+import { Card } from "@/components/ui/card";
 
 export default async function NovoCultoPage() {
   const { profile } = await getCurrentProfile();
@@ -11,10 +12,10 @@ export default async function NovoCultoPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-bold text-slate-900">Novo culto</h1>
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900">Novo culto</h1>
+      <Card className="p-6">
         <ServiceForm action={createService} submitLabel="Criar culto" />
-      </div>
+      </Card>
     </div>
   );
 }

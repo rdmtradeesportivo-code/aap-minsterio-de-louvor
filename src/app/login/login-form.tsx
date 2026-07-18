@@ -2,7 +2,10 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { AlertCircle } from "lucide-react";
 import { login, type AuthState } from "@/lib/actions/auth";
+import { Input, Label } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const initialState: AuthState = {};
 
@@ -14,50 +17,35 @@ export function LoginForm({ next }: { next: string }) {
       <input type="hidden" name="next" value={next} />
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-          E-mail
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        />
+        <Label htmlFor="email">E-mail</Label>
+        <Input id="email" name="email" type="email" autoComplete="email" required />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-          Senha
-        </label>
-        <input
+        <Label htmlFor="password">Senha</Label>
+        <Input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
           required
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
       </div>
 
       {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 shrink-0" />
           {state.error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-60"
-      >
+      <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Entrando..." : "Entrar"}
-      </button>
+      </Button>
 
-      <p className="text-center text-sm text-slate-600">
+      <p className="text-center text-sm text-slate-500">
         Ainda não tem conta?{" "}
-        <Link href="/cadastro" className="font-medium text-indigo-600 hover:text-indigo-500">
+        <Link href="/cadastro" className="font-semibold text-violet-600 hover:text-violet-700">
           Cadastre-se
         </Link>
       </p>

@@ -1,11 +1,18 @@
+import { X, UsersRound } from "lucide-react";
 import { addTeamMember, removeTeamMember, updateTeamStatus } from "@/lib/actions/services";
 import { TEAM_STATUS_LABELS } from "@/lib/types";
 import type { Profile, ServiceTeamMember } from "@/lib/types";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
+import { Input, Label, Select } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
-const STATUS_STYLES: Record<string, string> = {
-  confirmado: "bg-green-50 text-green-700",
-  recusado: "bg-red-50 text-red-700",
-  convidado: "bg-amber-50 text-amber-700",
+const STATUS_COLOR: Record<string, "green" | "red" | "amber"> = {
+  confirmado: "green",
+  recusado: "red",
+  convidado: "amber",
 };
 
 export function EscalaSection({
@@ -23,53 +30,46 @@ export function EscalaSection({
 }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+      <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
         Escala da equipe
       </h2>
 
       {team.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-          Ninguém escalado ainda.
-        </p>
+        <EmptyState icon={UsersRound} title="Ninguém escalado ainda" />
       ) : (
-        <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+        <Card className="divide-y divide-slate-100">
           {team.map((member) => {
             const isSelf = member.profile_id === currentUserId;
+            const name = member.profile?.full_name || "Sem nome";
             return (
-              <li key={member.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <div key={member.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
+                <Avatar name={name} className="h-8 w-8" />
                 <div className="flex-1">
-                  <p className="font-medium text-slate-900">
-                    {member.profile?.full_name || "Sem nome"}
-                  </p>
+                  <p className="font-medium text-slate-900">{name}</p>
                   <p className="text-xs text-slate-500">{member.role}</p>
                 </div>
 
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[member.status]}`}
-                >
+                <Badge color={STATUS_COLOR[member.status] ?? "slate"}>
                   {TEAM_STATUS_LABELS[member.status]}
-                </span>
+                </Badge>
 
                 {(isSelf || manage) && (
                   <form
                     action={updateTeamStatus.bind(null, member.id, serviceId)}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1.5"
                   >
-                    <select
+                    <Select
                       name="status"
                       defaultValue={member.status}
-                      className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                      className="w-auto py-1.5 text-xs"
                     >
                       <option value="convidado">Convidado</option>
                       <option value="confirmado">Confirmado</option>
                       <option value="recusado">Recusado</option>
-                    </select>
-                    <button
-                      type="submit"
-                      className="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
-                    >
+                    </Select>
+                    <Button type="submit" variant="outline" size="sm">
                       OK
-                    </button>
+                    </Button>
                   </form>
                 )}
 
@@ -77,60 +77,39 @@ export function EscalaSection({
                   <form action={removeTeamMember.bind(null, member.id, serviceId)}>
                     <button
                       type="submit"
-                      className="h-7 w-7 rounded-lg border border-red-200 text-xs text-red-600 hover:bg-red-50"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
                       aria-label="Remover da escala"
                     >
-                      ×
+                      <X className="h-4 w-4" />
                     </button>
                   </form>
                 )}
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </Card>
       )}
 
       {manage && (
-        <form
-          action={addTeamMember.bind(null, serviceId)}
-          className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white p-3"
-        >
-          <div>
-            <label htmlFor="profile_id" className="block text-xs font-medium text-slate-600">
-              Membro
-            </label>
-            <select
-              id="profile_id"
-              name="profile_id"
-              required
-              className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            >
-              {allProfiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name || "Sem nome"}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="role" className="block text-xs font-medium text-slate-600">
-              Função
-            </label>
-            <input
-              id="role"
-              name="role"
-              required
-              placeholder="Ex: Vocal, Violão, Bateria"
-              className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
-          >
-            Escalar
-          </button>
-        </form>
+        <Card className="p-4">
+          <form action={addTeamMember.bind(null, serviceId)} className="flex flex-wrap items-end gap-3">
+            <div>
+              <Label htmlFor="profile_id">Membro</Label>
+              <Select id="profile_id" name="profile_id" required className="min-w-40">
+                {allProfiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name || "Sem nome"}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="role">Função</Label>
+              <Input id="role" name="role" required placeholder="Ex: Vocal, Violão, Bateria" />
+            </div>
+            <Button type="submit">Escalar</Button>
+          </form>
+        </Card>
       )}
     </section>
   );
