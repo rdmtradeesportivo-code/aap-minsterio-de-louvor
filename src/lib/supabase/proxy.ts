@@ -37,18 +37,25 @@ export async function updateSession(request: NextRequest) {
     PUBLIC_EXACT_PATHS.includes(pathname) ||
     PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
+  // Sempre carregamos os cookies (possivelmente renovados pelo getUser acima)
+  // da `response` para a resposta de redirecionamento, senão uma sessão
+  // recém-renovada pode ser perdida e causar um loop de redirecionamento.
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
   }
 
   if (user && (pathname === "/login" || pathname === "/cadastro")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.searchParams.delete("next");
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
   }
 
   return response;
