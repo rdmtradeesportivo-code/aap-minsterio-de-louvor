@@ -1,0 +1,92 @@
+"use client";
+
+import { useActionState } from "react";
+import Link from "next/link";
+import { signup, type AuthState } from "@/lib/actions/auth";
+
+const initialState: AuthState = {};
+
+export function SignupForm() {
+  const [state, formAction, pending] = useActionState(signup, initialState);
+
+  return (
+    <form action={formAction} className="space-y-4">
+      <div>
+        <label htmlFor="full_name" className="block text-sm font-medium text-slate-700">
+          Nome completo
+        </label>
+        <input
+          id="full_name"
+          name="full_name"
+          type="text"
+          autoComplete="name"
+          required
+          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+          E-mail
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+          Senha
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="confirm_password" className="block text-sm font-medium text-slate-700">
+          Confirmar senha
+        </label>
+        <input
+          id="confirm_password"
+          name="confirm_password"
+          type="password"
+          autoComplete="new-password"
+          required
+          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        />
+      </div>
+
+      {state.error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {state.error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-60"
+      >
+        {pending ? "Criando conta..." : "Criar conta"}
+      </button>
+
+      <p className="text-center text-sm text-slate-600">
+        Já tem conta?{" "}
+        <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+          Entrar
+        </Link>
+      </p>
+    </form>
+  );
+}
