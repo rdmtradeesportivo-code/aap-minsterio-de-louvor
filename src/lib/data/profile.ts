@@ -23,14 +23,18 @@ export const getCurrentProfile = cache(async (): Promise<{
     throw new Error("Sessão não encontrada. Saia e entre novamente.");
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
   if (!profile) {
-    throw new Error("Perfil não encontrado para este usuário.");
+    throw new Error(
+      `Perfil não encontrado para o usuário ${user.id}. ${
+        error ? `Supabase: [${error.code}] ${error.message}` : ""
+      }`
+    );
   }
 
   return { userId: user.id, email: user.email ?? null, profile };
