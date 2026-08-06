@@ -8,6 +8,16 @@ Convenções: `id` é `BIGSERIAL PRIMARY KEY` em todas as tabelas; `criado_em`/`
 são `TIMESTAMPTZ DEFAULT now()`; enums são `VARCHAR` com `CHECK` (mais simples de alterar
 que `ENUM` nativo do Postgres ao longo do projeto).
 
+> **Migração para Supabase (em andamento, ver README):** o mesmo schema abaixo agora
+> vive no Postgres do Supabase, com duas adições sobre a migration original do Alembic
+> (aplicadas via `apply_migration` do Supabase, não via Alembic): a coluna
+> `usuarios.auth_user_id` (uuid, FK para `auth.users`, liga cada usuário a uma conta real
+> do Supabase Auth) e Row Level Security habilitado em todas as 24 tabelas, com policies
+> que espelham a mesma matriz de perfis (`admin`/`financeiro`/`recepcao`/`mecanico`) já
+> documentada abaixo em cada módulo. Alembic continua sendo a fonte de verdade para quem
+> roda o `backend/` FastAPI local (Docker Compose); o Supabase é a fonte de verdade do
+> ambiente deployado.
+
 ## 1. Usuários e Permissões — ✅ implementado (Módulo 1)
 
 **usuarios**
@@ -20,6 +30,7 @@ que `ENUM` nativo do Postgres ao longo do projeto).
 | perfil | varchar | CHECK IN ('admin','financeiro','recepcao','mecanico') |
 | ativo | boolean default true | |
 | criado_em | timestamptz | |
+| auth_user_id | uuid unique, FK auth.users, nullable | só existe no Supabase (ver nota de migração acima); liga o usuário à conta real do Supabase Auth |
 
 ## 2. Clientes e Veículos — ✅ implementado (Módulo 2)
 

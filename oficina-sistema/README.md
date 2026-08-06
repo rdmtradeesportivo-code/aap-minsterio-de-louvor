@@ -230,8 +230,81 @@ Também:
   serviço e é cancelada antes de faturar — para o frontend mostrar, lado a
   lado, que ela existe mas nunca entra nos relatórios de faturamento.
 
-O plano original de módulos está completo. Próxima etapa: uma rodada de
-revisão do sistema como um todo antes de considerar pronto para uso real.
+O plano original de módulos está completo (Módulos 1–6, todos sobre
+FastAPI + PostgreSQL local). O sistema foi então **deployado** (Supabase +
+Vercel) e, a pedido do cliente, está em **migração de arquitetura** para
+rodar 100% em Vercel + Supabase, sem depender de um host de backend à
+parte (Render). Ver seção "Migração para Vercel + Supabase" abaixo para o
+estado atual dessa migração — os módulos ainda não migrados continuam
+funcionando normalmente sobre o backend FastAPI descrito nas seções
+acima.
+
+## Migração para Vercel + Supabase
+
+Reescrita de runtime (Python/FastAPI → Next.js/TypeScript rodando como
+funções serverless no Vercel), **não** de regra de negócio — cada módulo
+migrado mantém exatamente as mesmas regras já provadas nos Módulos 1–6
+acima, só muda onde e como elas rodam. `docs/schema.md` continua sendo a
+fonte de verdade do schema (agora hospedado no Supabase, não mais num
+Postgres local via Alembic).
+
+Peças novas da arquitetura:
+
+- **Backend**: projeto Next.js 16 (App Router) separado, em
+  `oficina-sistema/backend-next/`, deployado como projeto Vercel próprio
+  (`oficina-funilaria-api`) — origem diferente do frontend, então a
+  autenticação é por **Bearer token** (não cookie). Cada route handler
+  valida o token e resolve o perfil chamando `getAuthContext()`
+  (`lib/auth.ts`), que nunca confia isoladamente no `user_metadata` do
+  JWT — sempre confere a tabela `usuarios` (a mesma que as policies de
+  RLS consultam). `proxy.ts` (convenção do Next 16 para o antigo
+  `middleware.ts`) cuida só de CORS; autorização de verdade fica em cada
+  rota + RLS, como a própria documentação do framework recomenda.
+- **Autenticação**: Supabase Auth substitui o JWT customizado. Os 4
+  perfis continuam existindo como antes, agora ligados a uma conta real
+  do Supabase Auth via `usuarios.auth_user_id`. Login no frontend chama
+  `supabase.auth.signInWithPassword()` diretamente; o `access_token`
+  resultante é enviado como `Authorization: Bearer` para o backend novo.
+- **Autorização**: Row Level Security no Postgres do Supabase assume a
+  parte pesada do controle de acesso — todas as 24 tabelas têm RLS
+  habilitado, com policies que espelham exatamente a mesma matriz de
+  perfis usada pelo `require_role(...)` do FastAPI (ex.: mecânico só lê
+  as OS em que está envolvido; recepção não acessa nada do financeiro).
+  Lógica de API só entra quando a regra é complexa demais para RLS puro.
+- **Estoque**: a baixa concorrente de peça (antes um `SELECT ... FOR
+  UPDATE` em Python) será reimplementada como função Postgres
+  (RPC do Supabase) — ainda não migrado (ver status por etapa abaixo).
+- **Fotos de OS**: vão passar de disco local para Supabase Storage —
+  ainda não migrado.
+
+### Status por etapa
+
+| Etapa | Escopo | Status |
+|---|---|---|
+| 1 | Tabelas de perfil + RLS em todas as tabelas | ✅ |
+| 2 | Backend Next.js — login, sessão, perfil (4 contas reais validadas) | ✅ |
+| 3 | Clientes e Veículos | pendente |
+| 4 | Estoque (com RPC de concorrência) | pendente |
+| 5 | Ordens de Serviço (com upload de fotos no Storage) | pendente |
+| 6 | Financeiro completo | pendente |
+| 7 | Relatórios Gerais | pendente |
+
+Cada etapa é validada de ponta a ponta (não só "a lógica parece igual")
+antes de avançar para a próxima, com deploy no Vercel ao final. Módulos
+ainda pendentes continuam servidos pelo backend FastAPI antigo — o
+frontend (Vite) fala com os dois backends ao mesmo tempo durante a
+transição (`VITE_BACKEND_URL` para o Next.js novo, `VITE_API_URL` para o
+FastAPI antigo), migrando página por página conforme cada etapa é
+concluída. O backend FastAPI só será removido quando a migração
+terminar 100% e for aprovada.
+
+**Nota sobre validação nesta migração**: como o ambiente de execução
+usado para construir isto não alcança `*.supabase.co`/`*.vercel.app`
+diretamente, a validação de cada etapa é feita contra o deploy real no
+Vercel (nunca contra um servidor local), usando a extensão `http` do
+Postgres do Supabase como ponte para simular chamadas autenticadas
+(incluindo tokens reais emitidos pelo Supabase Auth) direto de dentro da
+infraestrutura do Supabase.
 
 ## Como rodar (Docker Compose — recomendado)
 
@@ -296,7 +369,7 @@ Ver árvore completa e schema do banco em [`docs/schema.md`](./docs/schema.md).
 ```
 oficina-sistema/
 ├── docker-compose.yml
-├── backend/            # FastAPI + SQLAlchemy + Alembic
+├── backend/            # FastAPI + SQLAlchemy + Alembic (legado — em migração, ver acima)
 │   └── app/
 │       ├── core/       # config, database, security, deps (auth/RBAC)
 │       ├── models/     # ORM (1 arquivo por domínio, incremental)
@@ -304,10 +377,14 @@ oficina-sistema/
 │       ├── routers/    # endpoints por módulo
 │       ├── services/   # regras de negócio (baixa de estoque, comissão, etc.)
 │       └── seeds/      # dados de teste por módulo
-├── frontend/           # React (Vite)
+├── backend-next/       # Next.js (App Router) — backend novo, Vercel + Supabase
+│   ├── app/api/        # route handlers, 1 por endpoint
+│   ├── lib/            # auth.ts (getAuthContext/requirePerfil), supabase.ts
+│   └── proxy.ts         # CORS (substitui middleware.ts no Next 16)
+├── frontend/           # React (Vite) — fala com os dois backends durante a transição
 │   └── src/
 │       ├── contexts/
-│       ├── services/
+│       ├── services/   # api.js (apiNext + api antigo), supabaseClient.js
 │       ├── components/
 │       └── pages/
 └── docs/
