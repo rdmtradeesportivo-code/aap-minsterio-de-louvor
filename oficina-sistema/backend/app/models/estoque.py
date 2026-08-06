@@ -4,15 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import (
-    BigInteger,
-    CheckConstraint,
-    DateTime,
-    ForeignKey,
-    Numeric,
-    String,
-    func,
-)
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -72,10 +64,8 @@ class MovimentacaoEstoque(Base):
     tipo: Mapped[str] = mapped_column(String(10), nullable=False)
     quantidade: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     motivo: Mapped[str | None] = mapped_column(String(255))
-    # OS ainda não tem model ORM (chega no Módulo 4) — a FK já existe no
-    # banco (migration 0001), então mantemos a coluna sem relationship por
-    # enquanto; será preenchida quando a saída por consumo em OS existir.
-    os_id: Mapped[int | None] = mapped_column(BigInteger)
+    # Preenchido pelo Módulo 4 quando é saída por consumo em OS.
+    os_id: Mapped[int | None] = mapped_column(ForeignKey("ordens_servico.id"))
     usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
     conta_pagar_id: Mapped[int | None] = mapped_column(ForeignKey("contas_pagar.id"))
     observacao: Mapped[str | None] = mapped_column(String(255))

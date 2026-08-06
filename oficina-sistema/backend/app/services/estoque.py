@@ -17,11 +17,25 @@ from app.schemas.estoque import AjusteEstoqueCreate, EntradaEstoqueCreate
 NOME_CATEGORIA_PECAS_INSUMOS = "Peças e Insumos"
 
 
-def _obter_peca_ou_404(db: Session, peca_id: int) -> Peca:
-    peca = db.get(Peca, peca_id)
+def obter_peca_para_mutacao(db: Session, peca_id: int) -> Peca:
+    """Busca a peça travando a linha (`SELECT ... FOR UPDATE`) — usado por
+    toda operação que lê e depois escreve `estoque_atual` (entrada, ajuste,
+    saída por OS). Sem o lock, duas requisições concorrentes podem ler o
+    mesmo saldo, ambas passarem na checagem de saldo suficiente e o
+    resultado final ficar negativo (race condition clássica de
+    check-then-act). Com `FOR UPDATE`, a segunda transação bloqueia até a
+    primeira commitar/dar rollback, e então lê o saldo já atualizado.
+    """
+    peca = (
+        db.query(Peca).filter(Peca.id == peca_id).with_for_update().first()
+    )
     if peca is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Peça não encontrada")
     return peca
+
+
+def _obter_peca_ou_404(db: Session, peca_id: int) -> Peca:
+    return obter_peca_para_mutacao(db, peca_id)
 
 
 def _garantir_categoria_pecas_insumos(db: Session) -> CategoriaDespesa:

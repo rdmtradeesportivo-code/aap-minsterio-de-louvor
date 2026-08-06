@@ -47,3 +47,4 @@ __pycache__/
 .venv/
 oficina-sistema/frontend/node_modules/
 oficina-sistema/frontend/dist/
+oficina-sistema/backend/uploads/

@@ -58,7 +58,7 @@ observacao, criado_em
 > (peças mais usadas, giro, curva ABC) ficam para o Módulo 6 (Relatórios Gerais); por ora só
 > existe o alerta de estoque baixo (`GET /api/pecas?somente_estoque_baixo=true`).
 
-## 4. Ordens de Serviço
+## 4. Ordens de Serviço — ✅ implementado (Módulo 4)
 
 **ordens_servico**: id, numero (sequencial, unique), cliente_id → clientes, veiculo_id → veiculos,
 status varchar CHECK IN ('orcamento','aprovado','em_execucao','aguardando_peca','concluido','faturado','pago'),
@@ -82,6 +82,26 @@ data_hora *(auditoria obrigatória a cada mudança de status)*
 
 > Regra: faturar só é permitido se todo item de peça/serviço estiver preenchido (validação de
 > serviço, não de schema). Faturar gera `contas_receber`. Concluir dispara cálculo de `comissoes`.
+
+> Implementado — três decisões deliberadas na revisão do módulo:
+> - **`valor_total` nunca é lido da coluna do banco.** A coluna existe (compatibilidade com o
+>   schema original), mas a aplicação nunca escreve nem lê nela — a API sempre soma
+>   `os_itens_peca` + `os_itens_servico` na hora da resposta
+>   (`app/services/ordem_servico.py::calcular_valor_total`), então não existe caminho para o
+>   valor desatualizar.
+> - **Baixa de peça (`saida`) trava a linha da peça (`SELECT ... FOR UPDATE`)** antes de checar
+>   e decrementar o estoque (`estoque_service.obter_peca_para_mutacao`, reaproveitado do Módulo
+>   3), bloqueando com 400 se o saldo for insuficiente. Duas requisições concorrentes pedindo
+>   mais do que o saldo disponível: a segunda espera a primeira commitar e então vê o saldo já
+>   atualizado — nunca as duas passam na checagem ao mesmo tempo. Provado com teste de corrida
+>   real (duas threads, HTTP concorrente) rodado 3x.
+> - A OS bloqueia alteração de itens depois de faturada (`faturado`/`pago`); remover um item de
+>   peça antes disso estorna o estoque via uma movimentação `ajuste` com motivo registrado
+>   (nunca um `UPDATE` direto em `estoque_atual`).
+>
+> `funcionarios`, `regras_comissao`, `comissoes` e `contas_receber` ganharam ORM mínimo aqui
+> (antes do Módulo 5 completo) porque a própria regra de negócio deste módulo depende deles —
+> mesmo padrão já usado no Módulo 3 com `contas_pagar`.
 
 ## 5. Financeiro
 
@@ -139,6 +159,6 @@ incrementalmente, módulo por módulo:
 1. ✅ Usuários e Autenticação
 2. ✅ Clientes e Veículos
 3. ✅ Estoque de Peças
-4. ⬜ Ordens de Serviço
+4. ✅ Ordens de Serviço
 5. ⬜ Financeiro (contas a pagar/receber, folha, orçado x realizado, dashboards, DRE)
 6. ⬜ Relatórios Gerais

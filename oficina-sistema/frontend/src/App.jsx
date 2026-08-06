@@ -6,6 +6,8 @@ import Dashboard from "./pages/Dashboard";
 import ClientesList from "./pages/clientes/ClientesList";
 import ClienteDetail from "./pages/clientes/ClienteDetail";
 import PecasList from "./pages/estoque/PecasList";
+import OsList from "./pages/os/OsList";
+import OsDetail from "./pages/os/OsDetail";
 
 // Recepção cadastra/edita clientes; Admin e Financeiro veem tudo.
 const PERFIS_CLIENTES = ["admin", "financeiro", "recepcao"];
@@ -45,6 +47,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <PecasList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/os"
+            element={
+              <ProtectedRoute>
+                <OsList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/os/:id"
+            element={
+              <ProtectedRoute>
+                <OsDetail />
               </ProtectedRoute>
             }
           />

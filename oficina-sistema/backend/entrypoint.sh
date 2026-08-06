@@ -9,6 +9,7 @@ if [ "$AUTO_SEED" = "true" ]; then
   python -m app.seeds.seed_usuarios
   python -m app.seeds.seed_clientes
   python -m app.seeds.seed_estoque
+  python -m app.seeds.seed_ordens_servico
 fi
 
 echo "Iniciando API..."

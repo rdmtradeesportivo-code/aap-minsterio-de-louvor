@@ -75,8 +75,55 @@ Implementado nesta etapa:
 - Seed com 2 fornecedores, 4 categorias e 4 peças (uma delas propositalmente
   abaixo do mínimo, para ver o alerta funcionando).
 
+## Módulo 4 — Ordens de Serviço ✅
+
+Implementado nesta etapa, com atenção a três riscos concretos apontados na
+revisão do módulo:
+
+- **`valor_total` nunca é uma fonte de verdade solta.** A coluna existe no
+  banco (compatibilidade com o schema original), mas a aplicação nunca lê
+  nem escreve nela — a API sempre soma os itens (peça + serviço) na hora da
+  resposta (`calcular_valor_total`), então não existe caminho para o valor
+  desatualizar.
+- **Baixa de peça bloqueia com 400 se o estoque for insuficiente** — mesma
+  validação do ajuste manual do Módulo 3.
+- **Concorrência**: a peça é travada com `SELECT ... FOR UPDATE`
+  (`estoque_service.obter_peca_para_mutacao`) antes de checar/decrementar o
+  saldo, dentro da mesma transação do item da OS — duas requisições
+  concorrentes pedindo mais do que o saldo disponível nunca conseguem
+  "passar" as duas na checagem ao mesmo tempo. Provado com um teste de
+  corrida real (duas threads HTTP concorrentes, resultado: exatamente 1
+  sucesso + 1 bloqueio, estoque final nunca negativo), rodado 3x. O mesmo
+  lock foi retroaplicado ao ajuste/entrada do Módulo 3.
+- Fluxo de status com máquina de estados explícita (transições inválidas
+  bloqueadas com 400) e log auditável (`os_status_log`, quem mudou e quando).
+  Faturar é uma ação dedicada (não uma troca de status genérica): valida que
+  a OS está `concluido` e tem pelo menos 1 item, gera `contas_receber`
+  (com parcelamento opcional) e bloqueia qualquer alteração de item depois.
+- Ao concluir, calcula comissão automaticamente por item de serviço com
+  responsável definido (regra específica do funcionário tem prioridade
+  sobre o percentual padrão dele).
+- Remover um item de peça antes do faturamento estorna o estoque via uma
+  movimentação `ajuste` com motivo registrado — nunca um `UPDATE` direto.
+- Fotos (antes/depois) com upload real, servidas como arquivo estático.
+  PDF do orçamento gerado sob demanda (fpdf2).
+- RBAC: `recepcao` cria/edita OS; faturar é só `admin`/`financeiro`;
+  `mecanico` só enxerga (somente leitura) as OS em que é responsável por
+  algum item de serviço ou está em `os_funcionarios` — nunca a lista
+  inteira (testado via API e UI).
+- Models mínimos de `funcionarios`, `regras_comissao`, `comissoes` e
+  `contas_receber` entraram aqui (antes do Módulo 5 completo), mesmo padrão
+  já usado no Módulo 3 com `contas_pagar`.
+- Frontend: lista de OS com filtro por status, criação com seleção
+  cliente→veículo em cascata, detalhe completo (itens, status, faturamento,
+  responsáveis, fotos, histórico), download de PDF, e visão restrita do
+  mecânico.
+- Seed com 2 funcionários (um vinculado ao usuário mecânico de teste) e uma
+  OS de exemplo percorrendo o fluxo completo até faturado.
+
 Próximos módulos (ainda não implementados — apenas o schema já existe no
-banco): Ordens de Serviço → Financeiro completo → Relatórios.
+banco): Financeiro completo (orçado x realizado, fluxo de caixa, DRE,
+dashboards) → Relatórios Gerais.
 
 ## Como rodar (Docker Compose — recomendado)
 
@@ -115,6 +162,7 @@ alembic upgrade head
 python -m app.seeds.seed_usuarios
 python -m app.seeds.seed_clientes
 python -m app.seeds.seed_estoque
+python -m app.seeds.seed_ordens_servico
 uvicorn app.main:app --reload
 ```
 

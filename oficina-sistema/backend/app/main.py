@@ -1,8 +1,11 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import get_settings
-from app.routers import auth, clientes, estoque, usuarios, veiculos
+from app.routers import auth, clientes, estoque, funcionarios, ordens_servico, usuarios, veiculos
 
 settings = get_settings()
 
@@ -28,6 +31,12 @@ app.include_router(estoque.router_fornecedores)
 app.include_router(estoque.router_categorias_peca)
 app.include_router(estoque.router_pecas)
 app.include_router(estoque.router_movimentacoes)
+app.include_router(funcionarios.router)
+app.include_router(ordens_servico.router)
+
+UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 
 @app.get("/api/health", tags=["health"])
