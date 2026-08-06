@@ -61,7 +61,8 @@ observacao, criado_em
 ## 4. Ordens de Serviço — ✅ implementado (Módulo 4)
 
 **ordens_servico**: id, numero (sequencial, unique), cliente_id → clientes, veiculo_id → veiculos,
-status varchar CHECK IN ('orcamento','aprovado','em_execucao','aguardando_peca','concluido','faturado','pago'),
+status varchar CHECK IN ('orcamento','aprovado','em_execucao','aguardando_peca','concluido','faturado','pago','cancelado')
+*(`cancelado` adicionado na migration 0002 — ver nota de implementação abaixo)*,
 data_abertura, prazo_estimado date, forma_pagamento varchar, valor_total numeric(12,2),
 criado_por → usuarios, criado_em, atualizado_em
 
@@ -78,7 +79,8 @@ funcionario_id → funcionarios *(responsável, para comissão)*
 **os_fotos**: id, os_id → ordens_servico, tipo CHECK IN ('antes','depois'), caminho_arquivo, criado_em
 
 **os_status_log**: id, os_id → ordens_servico, status_anterior, status_novo, usuario_id → usuarios,
-data_hora *(auditoria obrigatória a cada mudança de status)*
+data_hora, motivo varchar nullable *(auditoria obrigatória a cada mudança de status; `motivo` — coluna
+adicionada na migration 0002 — só é preenchido no cancelamento)*
 
 > Regra: faturar só é permitido se todo item de peça/serviço estiver preenchido (validação de
 > serviço, não de schema). Faturar gera `contas_receber`. Concluir dispara cálculo de `comissoes`.
@@ -102,6 +104,15 @@ data_hora *(auditoria obrigatória a cada mudança de status)*
 > `funcionarios`, `regras_comissao`, `comissoes` e `contas_receber` ganharam ORM mínimo aqui
 > (antes do Módulo 5 completo) porque a própria regra de negócio deste módulo depende deles —
 > mesmo padrão já usado no Módulo 3 com `contas_pagar`.
+>
+> **Cancelamento** (migration 0002, endpoint dedicado `POST .../cancelar`, nunca pela troca de
+> status genérica): permitido em qualquer status anterior a `faturado` — depois de faturada, a
+> OS não cancela mais (só existiria estorno/nota de crédito, fora de escopo). Ao cancelar:
+> estoque já baixado é estornado (mesma lógica de remover item, mas os itens continuam visíveis
+> na OS para auditoria) e comissões já calculadas são zeradas (`valor = 0`, linha mantida para
+> auditoria). Uma OS cancelada nunca passa pela transição para `faturado`, então fica de fora
+> por construção de qualquer relatório de faturamento/DRE que só considere OS que atingiram
+> esse estado (ver Módulo 5).
 
 ## 5. Financeiro
 

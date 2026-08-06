@@ -20,6 +20,7 @@ from app.models.ordem_servico import OrdemServico, OsFuncionario, OsItemServico
 from app.models.usuario import Usuario
 from app.models.veiculo import Veiculo
 from app.schemas.ordem_servico import (
+    CancelarRequest,
     FaturarRequest,
     ItemPecaCreate,
     ItemPecaOut,
@@ -217,6 +218,16 @@ def mudar_status_os(
     current_user: Usuario = Depends(get_current_user),
 ):
     return os_service.mudar_status(db, os_id, payload.novo_status, current_user.id)
+
+
+@router.post("/{os_id}/cancelar", response_model=OrdemServicoDetalheOut, dependencies=[gerenciar])
+def cancelar_os(
+    os_id: int,
+    payload: CancelarRequest,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    return os_service.cancelar_os(db, os_id, payload, current_user.id)
 
 
 @router.post("/{os_id}/faturar", response_model=OrdemServicoDetalheOut, dependencies=[faturar_dep])

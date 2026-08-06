@@ -7,7 +7,14 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 from app.models.ordem_servico import STATUS_OS
 
 StatusOS = Literal[
-    "orcamento", "aprovado", "em_execucao", "aguardando_peca", "concluido", "faturado", "pago"
+    "orcamento",
+    "aprovado",
+    "em_execucao",
+    "aguardando_peca",
+    "concluido",
+    "faturado",
+    "pago",
+    "cancelado",
 ]
 
 
@@ -32,6 +39,10 @@ class StatusUpdate(BaseModel):
 
 class FaturarRequest(BaseModel):
     numero_parcelas: int = Field(default=1, ge=1, le=24)
+
+
+class CancelarRequest(BaseModel):
+    motivo: str | None = Field(default=None, max_length=255)
 
 
 # ---------------------------------------------------------------------- #
@@ -104,6 +115,7 @@ class OsStatusLogOut(BaseModel):
     status_novo: str
     usuario_id: int | None
     data_hora: datetime
+    motivo: str | None
 
 
 # ---------------------------------------------------------------------- #

@@ -42,6 +42,18 @@ STATUS_OS = (
     "concluido",
     "faturado",
     "pago",
+    "cancelado",
+)
+
+# Depois de faturada, uma OS nunca é cancelada — só existe estorno/nota de
+# crédito (fora de escopo por ora). Cancelamento é permitido em qualquer
+# status anterior a "faturado".
+STATUS_ANTES_DE_FATURAR = (
+    "orcamento",
+    "aprovado",
+    "em_execucao",
+    "aguardando_peca",
+    "concluido",
 )
 
 
@@ -155,5 +167,7 @@ class OsStatusLog(Base):
     status_novo: Mapped[str] = mapped_column(String(20), nullable=False)
     usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
     data_hora: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Só preenchido no cancelamento (migration 0002); demais transições ficam NULL.
+    motivo: Mapped[str | None] = mapped_column(String(255))
 
     os: Mapped["OrdemServico"] = relationship(back_populates="status_log")

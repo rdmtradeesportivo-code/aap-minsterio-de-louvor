@@ -4,11 +4,11 @@ import NavBar from "../../components/NavBar";
 import StatusBadge from "../../components/StatusBadge";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
-import { NOMES_STATUS, TRANSICOES_PERMITIDAS } from "./statusUtils";
+import { NOMES_STATUS, STATUS_CANCELAVEIS, TRANSICOES_PERMITIDAS } from "./statusUtils";
 
 const PODE_GERENCIAR = ["admin", "financeiro", "recepcao"];
 const PODE_FATURAR = ["admin", "financeiro"];
-const ITENS_BLOQUEADOS = ["faturado", "pago"];
+const ITENS_BLOQUEADOS = ["faturado", "pago", "cancelado"];
 
 export default function OsDetail() {
   const { id } = useParams();
@@ -55,6 +55,21 @@ export default function OsDetail() {
       carregar();
     } catch (err) {
       setErro(err.response?.data?.detail || "Não foi possível mudar o status.");
+    }
+  }
+
+  async function handleCancelar() {
+    setErro("");
+    const motivo = window.prompt("Motivo do cancelamento (opcional):") || "";
+    if (motivo === null) return;
+    if (!window.confirm(`Cancelar a OS #${os.numero}? Estoque de peças já baixado será estornado.`)) {
+      return;
+    }
+    try {
+      await api.post(`/api/ordens-servico/${id}/cancelar`, { motivo: motivo || null });
+      carregar();
+    } catch (err) {
+      setErro(err.response?.data?.detail || "Não foi possível cancelar a OS.");
     }
   }
 
@@ -201,7 +216,7 @@ export default function OsDetail() {
 
         {erro && <p style={{ color: "#dc2626", fontSize: "13px" }}>{erro}</p>}
 
-        {podeGerenciar && transicoesDisponiveis.length > 0 && (
+        {podeGerenciar && (transicoesDisponiveis.length > 0 || STATUS_CANCELAVEIS.includes(os.status)) && (
           <div style={{ margin: "16px 0" }}>
             <strong style={{ fontSize: "13px", marginRight: "8px" }}>Mudar status:</strong>
             {transicoesDisponiveis.map((s) => (
@@ -209,6 +224,11 @@ export default function OsDetail() {
                 {NOMES_STATUS[s]}
               </button>
             ))}
+            {STATUS_CANCELAVEIS.includes(os.status) && (
+              <button onClick={handleCancelar} style={{ ...styles.secondaryButton, color: "#dc2626", borderColor: "#fca5a5" }}>
+                Cancelar OS
+              </button>
+            )}
           </div>
         )}
 

@@ -121,6 +121,21 @@ revisão do módulo:
 - Seed com 2 funcionários (um vinculado ao usuário mecânico de teste) e uma
   OS de exemplo percorrendo o fluxo completo até faturado.
 
+### Gap fechado após a revisão: status "cancelado"
+
+- Migration `0002`: novo valor `cancelado` no CHECK de `ordens_servico.status`
+  e coluna `motivo` (nullable) em `os_status_log`.
+- Endpoint dedicado `POST /api/ordens-servico/{id}/cancelar` (nunca pela troca
+  de status genérica) — permitido em qualquer status anterior a `faturado`;
+  depois de faturada, não cancela mais.
+- Estoque já baixado é estornado (mesma lógica de remover item; itens
+  continuam visíveis na OS cancelada, só para auditoria).
+- Comissões já calculadas são zeradas (`valor = 0`, linha mantida).
+- Uma OS cancelada nunca passa pela transição para `faturado`, então fica de
+  fora por construção de qualquer relatório de faturamento/DRE do Módulo 5.
+- Testado via API (bloqueios: cancelar já cancelada, cancelar faturada,
+  setar `cancelado` via `/status` genérico, mecânico sem permissão) e via UI.
+
 Próximos módulos (ainda não implementados — apenas o schema já existe no
 banco): Financeiro completo (orçado x realizado, fluxo de caixa, DRE,
 dashboards) → Relatórios Gerais.

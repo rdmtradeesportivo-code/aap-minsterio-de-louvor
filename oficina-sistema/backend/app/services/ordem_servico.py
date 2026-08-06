@@ -29,6 +29,7 @@ from app.models.cliente import Cliente
 from app.models.estoque import MovimentacaoEstoque
 from app.models.financeiro import Comissao, ContaReceber, Funcionario, RegraComissao
 from app.models.ordem_servico import (
+    STATUS_ANTES_DE_FATURAR,
     OrdemServico,
     OsFoto,
     OsFuncionario,
@@ -37,9 +38,8 @@ from app.models.ordem_servico import (
     OsStatusLog,
 )
 from app.models.veiculo import Veiculo
-
-UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "os_fotos"
 from app.schemas.ordem_servico import (
+    CancelarRequest,
     FaturarRequest,
     ItemPecaCreate,
     ItemServicoCreate,
@@ -48,10 +48,13 @@ from app.schemas.ordem_servico import (
 )
 from app.services import estoque as estoque_service
 
+UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "os_fotos"
+
 # Estados terminais em relação a itens: uma vez faturada, a OS não pode mais
 # ter peças/serviços alterados (a conta a receber já foi gerada com base
-# nesses itens).
-STATUS_ITENS_BLOQUEADOS = ("faturado", "pago")
+# nesses itens). "cancelado" entra na mesma lista por consistência (embora
+# cancelar_os já barre a transição por outro caminho).
+STATUS_ITENS_BLOQUEADOS = ("faturado", "pago", "cancelado")
 
 # Transições de status permitidas. "faturado" só é alcançável pelo endpoint
 # dedicado de faturamento (valida itens e gera contas_receber), nunca pela
@@ -277,6 +280,11 @@ def mudar_status(db: Session, os_id: int, novo_status: str, usuario_id: int) -> 
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Use o endpoint de faturamento (POST /api/ordens-servico/{id}/faturar)",
         )
+    if novo_status == "cancelado":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use o endpoint de cancelamento (POST /api/ordens-servico/{id}/cancelar)",
+        )
 
     permitidos = TRANSICOES_PERMITIDAS.get(os_.status, set())
     if novo_status not in permitidos:
@@ -297,6 +305,63 @@ def mudar_status(db: Session, os_id: int, novo_status: str, usuario_id: int) -> 
             status_anterior=status_anterior,
             status_novo=novo_status,
             usuario_id=usuario_id,
+        )
+    )
+    db.commit()
+    db.refresh(os_)
+    return os_
+
+
+def cancelar_os(
+    db: Session, os_id: int, payload: CancelarRequest, usuario_id: int
+) -> OrdemServico:
+    """Cancela a OS. Permitido em qualquer status anterior a "faturado" —
+    depois de faturada, não cancela mais (só existiria estorno/nota de
+    crédito, fora de escopo por ora).
+
+    Efeitos colaterais, ambos deliberados:
+    - Estoque já baixado (itens de peça) é estornado, na mesma lógica de
+      `remover_item_peca` — mas os itens NÃO são apagados, ficam no
+      histórico da OS cancelada para auditoria.
+    - Comissões já calculadas (ex: cancelamento depois de "concluido", antes
+      de faturar) são zeradas — a linha continua existindo para auditoria,
+      mas com valor 0, então nunca entra em soma de fechamento de folha ou
+      de DRE (que somam `comissoes.valor`).
+    """
+    os_ = _os_ou_404(db, os_id, com_itens=True)
+
+    if os_.status not in STATUS_ANTES_DE_FATURAR:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Só é possível cancelar uma OS antes de faturada (status atual: {os_.status})",
+        )
+
+    for item in os_.itens_peca:
+        peca = estoque_service.obter_peca_para_mutacao(db, item.peca_id)
+        peca.estoque_atual = peca.estoque_atual + item.quantidade
+        db.add(
+            MovimentacaoEstoque(
+                peca_id=peca.id,
+                tipo="ajuste",
+                quantidade=item.quantidade,
+                motivo=f"Estorno por cancelamento da OS #{os_.numero}",
+                os_id=os_.id,
+                usuario_id=usuario_id,
+            )
+        )
+
+    for comissao in db.query(Comissao).filter(Comissao.os_id == os_.id).all():
+        comissao.valor = Decimal("0")
+
+    status_anterior = os_.status
+    os_.status = "cancelado"
+    db.add(
+        OsStatusLog(
+            os_id=os_.id,
+            status_anterior=status_anterior,
+            status_novo="cancelado",
+            usuario_id=usuario_id,
+            motivo=payload.motivo,
         )
     )
     db.commit()
