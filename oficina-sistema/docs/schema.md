@@ -21,11 +21,15 @@ que `ENUM` nativo do Postgres ao longo do projeto).
 | ativo | boolean default true | |
 | criado_em | timestamptz | |
 
-## 2. Clientes e Veículos
+## 2. Clientes e Veículos — ✅ implementado (Módulo 2)
 
 **clientes**: id, nome, telefone, email, cpf_cnpj (unique), endereco, criado_em
 
 **veiculos**: id, cliente_id → clientes, placa (unique), modelo, marca, ano, cor, km_atual, criado_em
+
+> Histórico de serviços por veículo (todas as OS já feitas naquele carro) fica
+> pendente até o Módulo 4 (Ordens de Serviço) existir — a rota será
+> adicionada em `veiculos.py` quando houver dado para mostrar.
 
 ## 3. Estoque de Peças
 
@@ -124,7 +128,7 @@ aplicação (models ORM, schemas, routers, regras de negócio) é construído
 incrementalmente, módulo por módulo:
 
 1. ✅ Usuários e Autenticação
-2. ⬜ Clientes e Veículos
+2. ✅ Clientes e Veículos
 3. ⬜ Estoque de Peças
 4. ⬜ Ordens de Serviço
 5. ⬜ Financeiro (contas a pagar/receber, folha, orçado x realizado, dashboards, DRE)

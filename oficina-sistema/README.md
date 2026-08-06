@@ -30,9 +30,25 @@ Implementado nesta etapa:
   logado.
 - Seed de teste com um usuário por perfil.
 
+## Módulo 2 — Clientes e Veículos ✅
+
+Implementado nesta etapa:
+
+- Model, schemas Pydantic e endpoints de `clientes` e `veiculos`, com
+  validação de CPF/CNPJ e placa únicos (409 em duplicata) e checagem de
+  cliente existente ao cadastrar um veículo (404 se não existir).
+- Acesso restrito a `admin`, `financeiro` e `recepcao` (regra: "Recepção só
+  cria/edita OS e clientes"; `mecanico` não enxerga este módulo — testado via
+  API, 403, e via UI, rota bloqueada e link oculto na navegação).
+- `GET /api/clientes/{id}` retorna o cliente com os veículos aninhados;
+  `GET /api/clientes/{id}/veiculos` lista separadamente.
+- Frontend: lista de clientes com busca, formulário de criação inline,
+  página de detalhe do cliente com cadastro de veículos.
+- Seed de teste com 3 clientes e 4 veículos.
+
 Próximos módulos (ainda não implementados — apenas o schema já existe no
-banco): Clientes e Veículos → Estoque de Peças → Ordens de Serviço →
-Financeiro completo → Relatórios.
+banco): Estoque de Peças → Ordens de Serviço → Financeiro completo →
+Relatórios.
 
 ## Como rodar (Docker Compose — recomendado)
 
@@ -69,6 +85,7 @@ pip install -r requirements.txt
 cp .env.example .env   # ajuste DATABASE_URL para seu Postgres local
 alembic upgrade head
 python -m app.seeds.seed_usuarios
+python -m app.seeds.seed_clientes
 uvicorn app.main:app --reload
 ```
 

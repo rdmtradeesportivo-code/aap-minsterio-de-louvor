@@ -3,6 +3,11 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import Dashboard from "./pages/Dashboard";
+import ClientesList from "./pages/clientes/ClientesList";
+import ClienteDetail from "./pages/clientes/ClienteDetail";
+
+// Recepção cadastra/edita clientes; Admin e Financeiro veem tudo.
+const PERFIS_CLIENTES = ["admin", "financeiro", "recepcao"];
 
 export default function App() {
   return (
@@ -15,6 +20,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clientes"
+            element={
+              <ProtectedRoute perfis={PERFIS_CLIENTES}>
+                <ClientesList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clientes/:id"
+            element={
+              <ProtectedRoute perfis={PERFIS_CLIENTES}>
+                <ClienteDetail />
               </ProtectedRoute>
             }
           />
