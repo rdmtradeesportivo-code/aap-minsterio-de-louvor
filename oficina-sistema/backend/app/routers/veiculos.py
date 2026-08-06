@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -32,7 +33,11 @@ def criar_veiculo(payload: VeiculoCreate, db: Session = Depends(get_db)) -> Veic
 
     veiculo = Veiculo(**payload.model_dump())
     db.add(veiculo)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Placa já cadastrada")
     db.refresh(veiculo)
     return veiculo
 
@@ -65,7 +70,11 @@ def atualizar_veiculo(
     for campo, valor in dados.items():
         setattr(veiculo, campo, valor)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Placa já cadastrada")
     db.refresh(veiculo)
     return veiculo
 

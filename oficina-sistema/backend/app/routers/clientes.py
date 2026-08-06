@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import get_db
@@ -39,7 +40,13 @@ def criar_cliente(payload: ClienteCreate, db: Session = Depends(get_db)) -> Clie
 
     cliente = Cliente(**payload.model_dump())
     db.add(cliente)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="CPF/CNPJ já cadastrado"
+        )
     db.refresh(cliente)
     return cliente
 
@@ -75,7 +82,13 @@ def atualizar_cliente(
     for campo, valor in dados.items():
         setattr(cliente, campo, valor)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="CPF/CNPJ já cadastrado"
+        )
     db.refresh(cliente)
     return cliente
 

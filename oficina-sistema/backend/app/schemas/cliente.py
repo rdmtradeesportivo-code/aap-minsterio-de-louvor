@@ -1,9 +1,28 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class ClienteBase(BaseModel):
+class _NormalizaVaziosMixin:
+    """Converte string vazia/só espaços em None.
+
+    Sem isso, campos opcionais e únicos (ex: cpf_cnpj) armazenariam ""
+    em vez de NULL — e dois clientes sem CPF cadastrado colidiriam na
+    constraint UNIQUE (Postgres trata múltiplos NULL como distintos, mas
+    "" == "" é considerado duplicata).
+    """
+
+    @field_validator(
+        "telefone", "email", "cpf_cnpj", "endereco", mode="before", check_fields=False
+    )
+    @classmethod
+    def _vazio_para_none(cls, v):
+        if isinstance(v, str) and v.strip() == "":
+            return None
+        return v
+
+
+class ClienteBase(_NormalizaVaziosMixin, BaseModel):
     nome: str = Field(min_length=1, max_length=150)
     telefone: str | None = Field(default=None, max_length=20)
     email: str | None = Field(default=None, max_length=150)
@@ -15,7 +34,7 @@ class ClienteCreate(ClienteBase):
     pass
 
 
-class ClienteUpdate(BaseModel):
+class ClienteUpdate(_NormalizaVaziosMixin, BaseModel):
     nome: str | None = Field(default=None, min_length=1, max_length=150)
     telefone: str | None = Field(default=None, max_length=20)
     email: str | None = Field(default=None, max_length=150)
