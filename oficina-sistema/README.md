@@ -189,8 +189,49 @@ Também:
   Carlos Mecânico usando a comissão de verdade gerada pela OS #1 do
   Módulo 4, imprime o DRE/orçado x realizado resultante ao final.
 
-Próximo módulo (ainda não implementado — apenas o schema já existe no
-banco): Relatórios Gerais.
+## Módulo 6 — Relatórios Gerais ✅
+
+Último módulo do plano original. Não introduz tabelas novas — são consultas
+sobre o schema já existente (`app/services/relatorios.py`). Dois pontos
+receberam atenção especial na revisão:
+
+- **"Lucro por OS" usa sempre o custo snapshotado.** `custo_pecas` de cada OS
+  é somado a partir de `os_itens_peca.custo_unitario` (o custo de compra no
+  momento em que a peça foi vendida naquela OS), nunca de `peca.custo_compra`
+  (o custo atual, que muda a cada nova entrada de estoque). Provado: uma
+  entrada de estoque dobrou o custo de compra de uma peça já usada numa OS
+  faturada anteriormente (`R$ 350,00` → `R$ 700,00`) e o lucro daquela OS em
+  `lucro-por-os` continuou exatamente igual — a consulta lê o histórico, não
+  o presente.
+- **"Inadimplência" e "ranking de serviços" excluem OS canceladas, mesma
+  construção do DRE (Módulo 5).** Ambos partem da mesma função que já
+  restringe a OS que passaram pela transição para `faturado` — e
+  cancelamento só é permitido antes dessa transição existir. Provado: uma OS
+  com item de serviço lançado foi cancelada antes de faturar; o item continua
+  no banco para auditoria, mas nunca aparece no ranking; e como
+  `contas_receber` só nasce ao faturar, essa OS nunca pode gerar
+  inadimplência.
+
+Também:
+
+- `GET /api/relatorios/faturamento`, `/lucro-por-os` e `/ranking-servicos`
+  aceitam `?mes=AAAA-MM` (default: mês corrente); `/inadimplencia` não
+  depende de período — lista todas as contas a receber vencidas e não pagas.
+- Restrito a `admin`/`financeiro`, mesmo padrão do resto do domínio
+  financeiro — confirmado via API (403 com token de recepção) e via UI (link
+  oculto, rota bloqueada).
+- Frontend: página única com faturamento do mês, tabela de lucro por OS,
+  gráfico de barras do ranking de serviços e tabela de inadimplência, com
+  seletor de mês.
+- Seed dedicado (`seed_relatorios.py`, roda depois de `seed_financeiro`):
+  adiciona uma segunda e uma terceira OS faturadas (para o ranking mostrar
+  mais de um serviço), retroage o vencimento de uma conta a receber para
+  simular um cliente inadimplente, e cria uma quarta OS que recebe item de
+  serviço e é cancelada antes de faturar — para o frontend mostrar, lado a
+  lado, que ela existe mas nunca entra nos relatórios de faturamento.
+
+O plano original de módulos está completo. Próxima etapa: uma rodada de
+revisão do sistema como um todo antes de considerar pronto para uso real.
 
 ## Como rodar (Docker Compose — recomendado)
 
@@ -231,6 +272,7 @@ python -m app.seeds.seed_clientes
 python -m app.seeds.seed_estoque
 python -m app.seeds.seed_ordens_servico
 python -m app.seeds.seed_financeiro
+python -m app.seeds.seed_relatorios
 uvicorn app.main:app --reload
 ```
 

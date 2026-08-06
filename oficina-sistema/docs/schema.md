@@ -176,6 +176,40 @@ valor_meta numeric(12,2) *(único por categoria+mês)*
 >   tabela de saldo de caixa inicial).
 > - **Ponto de equilíbrio** = despesas fixas ÷ margem de contribuição %, do DRE do mês.
 
+## 6. Relatórios Gerais — ✅ implementado (Módulo 6)
+
+Não introduz tabelas novas — são apenas consultas sobre o schema já existente
+(`ordens_servico`, `os_itens_peca`, `os_itens_servico`, `os_status_log`, `comissoes`,
+`contas_receber`). Quatro relatórios, todos em `app/services/relatorios.py`:
+
+- **Faturamento por período**: quantidade e valor total das OS que passaram pela transição
+  para `faturado` dentro do intervalo.
+- **Lucro por OS**: receita (`calcular_valor_total`) − custo de peças − comissões, por OS
+  faturada no período, ordenado da mais recente para a mais antiga.
+- **Inadimplência de clientes**: agrupa `contas_receber` com `status = 'atrasado'` por
+  cliente (chama `atualizar_status_vencidos` antes de ler, para não depender de um job
+  externo já ter rodado).
+- **Ranking de serviços mais vendidos**: soma `os_itens_servico` (quantidade e valor) por
+  descrição, das OS faturadas no período, ordenado por valor.
+
+> Implementado — dois pontos deliberados na revisão do módulo:
+> - **"Lucro por OS" usa sempre `os_itens_peca.custo_unitario`** (o custo *snapshotado* no
+>   momento em que a peça foi vendida naquela OS) — nunca `peca.custo_compra` (o custo atual
+>   da peça, que muda a cada nova entrada de estoque). Provado registrando uma nova entrada
+>   que dobrou o custo de compra de uma peça (`350.00` → `700.00`) depois que a OS já estava
+>   faturada: o `custo_pecas`/`lucro` daquela OS em `lucro-por-os` continuou idêntico, porque a
+>   consulta lê a coluna do item histórico, não a peça atual.
+> - **"Inadimplência" e "ranking de serviços" excluem OS canceladas pela mesma construção do
+>   DRE** (Módulo 5): ambos partem de `_os_faturadas_no_periodo`, que só inclui OS que
+>   passaram pela transição `status_novo = 'faturado'` em `os_status_log` — e cancelamento só
+>   é permitido antes dessa transição existir. Provado criando uma OS com item de serviço e
+>   cancelando-a antes de faturar: o item continua no banco (auditoria), mas nunca aparece em
+>   `ranking-servicos`; e como `contas_receber` só é criada por `faturar_os`, uma OS cancelada
+>   nunca gera conta a receber, logo nunca pode aparecer em "inadimplência".
+> - Todos os quatro endpoints são restritos a `admin`/`financeiro`, mesmo padrão do resto do
+>   domínio financeiro — confirmado tanto na API (403 com token de recepção) quanto na UI
+>   (link e rota não aparecem/bloqueiam para outros perfis).
+
 ## Relacionamentos-chave (resumo)
 
 - `cliente 1—N veiculo`, `veiculo 1—N ordem_servico`
@@ -197,4 +231,4 @@ incrementalmente, módulo por módulo:
 3. ✅ Estoque de Peças
 4. ✅ Ordens de Serviço
 5. ✅ Financeiro (contas a pagar/receber, folha, orçado x realizado, dashboards, DRE)
-6. ⬜ Relatórios Gerais
+6. ✅ Relatórios Gerais (faturamento por período, lucro por OS, inadimplência, ranking de serviços)

@@ -41,6 +41,9 @@ export default function NavBar() {
             <Link to="/financeiro/dashboard" style={styles.link}>
               Dashboard
             </Link>
+            <Link to="/relatorios" style={styles.link}>
+              Relatórios
+            </Link>
           </>
         )}
       </div>

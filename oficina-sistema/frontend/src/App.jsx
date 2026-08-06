@@ -13,6 +13,7 @@ import ContasReceber from "./pages/financeiro/ContasReceber";
 import Folha from "./pages/financeiro/Folha";
 import OrcadoRealizado from "./pages/financeiro/OrcadoRealizado";
 import DashboardFinanceiro from "./pages/financeiro/Dashboard";
+import Relatorios from "./pages/relatorios/Relatorios";
 
 // Recepção cadastra/edita clientes; Admin e Financeiro veem tudo.
 const PERFIS_CLIENTES = ["admin", "financeiro", "recepcao"];
@@ -110,6 +111,14 @@ export default function App() {
             element={
               <ProtectedRoute perfis={PERFIS_FINANCEIRO}>
                 <DashboardFinanceiro />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/relatorios"
+            element={
+              <ProtectedRoute perfis={PERFIS_FINANCEIRO}>
+                <Relatorios />
               </ProtectedRoute>
             }
           />

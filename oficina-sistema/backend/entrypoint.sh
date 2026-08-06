@@ -11,6 +11,7 @@ if [ "$AUTO_SEED" = "true" ]; then
   python -m app.seeds.seed_estoque
   python -m app.seeds.seed_ordens_servico
   python -m app.seeds.seed_financeiro
+  python -m app.seeds.seed_relatorios
 fi
 
 echo "Iniciando API..."

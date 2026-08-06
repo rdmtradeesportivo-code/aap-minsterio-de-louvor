@@ -15,6 +15,7 @@ from app.routers import (
     funcionarios,
     metas_orcamento,
     ordens_servico,
+    relatorios,
     usuarios,
     veiculos,
 )
@@ -49,6 +50,7 @@ app.include_router(financeiro.router)
 app.include_router(folha.router)
 app.include_router(metas_orcamento.router)
 app.include_router(dashboards.router)
+app.include_router(relatorios.router)
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
