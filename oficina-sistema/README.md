@@ -136,9 +136,61 @@ revisão do módulo:
 - Testado via API (bloqueios: cancelar já cancelada, cancelar faturada,
   setar `cancelado` via `/status` genérico, mecânico sem permissão) e via UI.
 
-Próximos módulos (ainda não implementados — apenas o schema já existe no
-banco): Financeiro completo (orçado x realizado, fluxo de caixa, DRE,
-dashboards) → Relatórios Gerais.
+## Módulo 5 — Financeiro completo ✅
+
+Módulo mais sensível para o cliente final — três pontos receberam atenção
+especial na revisão:
+
+- **Fechamento de folha idempotente.** `fechar_folha` trava a linha da
+  folha (`SELECT ... FOR UPDATE`) e confere `status == 'aberto'` antes de
+  processar; se já estiver fechada, levanta 400 sem tocar em nada. A soma
+  de comissões do período só considera `comissoes.folha_id IS NULL`, e
+  cada uma é marcada com `folha_id` ao fechar — não sobra comissão "solta"
+  para somar de novo. Provado com chamada dupla sequencial (bloqueada) e
+  com duas requisições HTTP concorrentes reais na mesma folha (resultado:
+  sempre exatamente 1 sucesso + 1 bloqueio, nunca duas `contas_pagar`).
+- **DRE e dashboards batem com dados reais, nunca mockados.** Receita e
+  custo de peças vêm de `ordens_servico`/`os_itens_peca`, restritos às OS
+  que passaram pela transição para `faturado` no período (reaproveita o
+  `calcular_valor_total` do Módulo 4, então a receita do DRE nunca diverge
+  do valor mostrado na própria OS). Uma OS cancelada nunca chega a
+  `faturado`, então fica de fora por construção — sem precisar de filtro
+  extra em cada relatório.
+- **Orçado x realizado consulta `contas_pagar` reais** por categoria/mês
+  (filtro por `vencimento`), nunca um número calculado à parte. Alerta
+  visual a partir de 90% da meta.
+
+Também:
+
+- Contas a Pagar/Receber: lançamento manual (categoria obrigatória — sem
+  categoria não salva), listagem com filtro por status, marcar como
+  paga/recebida. Status `atrasado` é recalculado a cada listagem
+  (vencimento no passado + ainda pendente).
+- Folha de Pagamento: abrir → adicionar descontos → fechar (calcula
+  salário base + comissões do período − descontos, gera `contas_pagar`
+  categoria "Pessoal") → pagar.
+- Fluxo de caixa: série diária de entradas/saídas realizadas (por data de
+  pagamento/recebimento) e projetadas (por vencimento de pendentes), com
+  saldo acumulado a partir de zero no início do período consultado (o
+  schema não tem uma tabela de saldo de caixa inicial — documentado como
+  simplificação).
+- Ponto de equilíbrio = despesas fixas ÷ margem de contribuição % do mês.
+- Evolução mensal (6 meses) e despesas por categoria, para os dashboards.
+- Despesas fixas do DRE = `contas_pagar` reais (fixa/tributos/
+  investimentos) **+** salário base das folhas fechadas no período —
+  deliberadamente sem a comissão da folha, que já entra na linha
+  "Comissões" do DRE (evita duplicar).
+- Restrito inteiramente a `admin`/`financeiro` — nem recepção nem mecânico
+  têm acesso a qualquer dado financeiro (testado via API e UI).
+- Frontend: Contas a Pagar, Contas a Receber, Folha, Orçado x Realizado
+  (barras com linha de meta) e Dashboard (DRE, ponto de equilíbrio,
+  evolução mensal, despesas por categoria).
+- Seed reaproveitando dados reais dos módulos anteriores: fecha a folha de
+  Carlos Mecânico usando a comissão de verdade gerada pela OS #1 do
+  Módulo 4, imprime o DRE/orçado x realizado resultante ao final.
+
+Próximo módulo (ainda não implementado — apenas o schema já existe no
+banco): Relatórios Gerais.
 
 ## Como rodar (Docker Compose — recomendado)
 
@@ -178,6 +230,7 @@ python -m app.seeds.seed_usuarios
 python -m app.seeds.seed_clientes
 python -m app.seeds.seed_estoque
 python -m app.seeds.seed_ordens_servico
+python -m app.seeds.seed_financeiro
 uvicorn app.main:app --reload
 ```
 

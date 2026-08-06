@@ -8,9 +8,16 @@ import ClienteDetail from "./pages/clientes/ClienteDetail";
 import PecasList from "./pages/estoque/PecasList";
 import OsList from "./pages/os/OsList";
 import OsDetail from "./pages/os/OsDetail";
+import ContasPagar from "./pages/financeiro/ContasPagar";
+import ContasReceber from "./pages/financeiro/ContasReceber";
+import Folha from "./pages/financeiro/Folha";
+import OrcadoRealizado from "./pages/financeiro/OrcadoRealizado";
+import DashboardFinanceiro from "./pages/financeiro/Dashboard";
 
 // Recepção cadastra/edita clientes; Admin e Financeiro veem tudo.
 const PERFIS_CLIENTES = ["admin", "financeiro", "recepcao"];
+// Financeiro é restrito inteiramente a admin/financeiro.
+const PERFIS_FINANCEIRO = ["admin", "financeiro"];
 
 export default function App() {
   return (
@@ -63,6 +70,46 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <OsDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/financeiro/contas-pagar"
+            element={
+              <ProtectedRoute perfis={PERFIS_FINANCEIRO}>
+                <ContasPagar />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/financeiro/contas-receber"
+            element={
+              <ProtectedRoute perfis={PERFIS_FINANCEIRO}>
+                <ContasReceber />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/financeiro/folha"
+            element={
+              <ProtectedRoute perfis={PERFIS_FINANCEIRO}>
+                <Folha />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/financeiro/orcado-realizado"
+            element={
+              <ProtectedRoute perfis={PERFIS_FINANCEIRO}>
+                <OrcadoRealizado />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/financeiro/dashboard"
+            element={
+              <ProtectedRoute perfis={PERFIS_FINANCEIRO}>
+                <DashboardFinanceiro />
               </ProtectedRoute>
             }
           />

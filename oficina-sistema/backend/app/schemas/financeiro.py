@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -47,9 +48,73 @@ class FuncionarioOut(FuncionarioBase):
 
 
 # ---------------------------------------------------------------------- #
-# Contas a Receber e Comissões — somente leitura no Módulo 4 (geradas
-# automaticamente ao faturar/concluir uma OS; o CRUD completo de
-# lançamento manual é o Módulo 5).
+# Categorias de despesa e Centros de custo
+# ---------------------------------------------------------------------- #
+class CategoriaDespesaBase(BaseModel):
+    nome: str = Field(min_length=1, max_length=100)
+    tipo: Literal["fixa", "variavel", "pessoal", "tributos", "investimentos"]
+
+
+class CategoriaDespesaCreate(CategoriaDespesaBase):
+    pass
+
+
+class CategoriaDespesaOut(CategoriaDespesaBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+
+
+class CentroCustoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nome: Literal["funilaria", "pintura", "mecanica", "administrativo"]
+
+
+# ---------------------------------------------------------------------- #
+# Contas a Pagar — lançamento manual (entrada de estoque e folha geram
+# automaticamente, ver app/services/estoque.py e app/services/folha.py).
+# Regra de negócio: toda saída financeira precisa de categoria — sem
+# categoria, não é possível salvar (categoria_id é obrigatório aqui).
+# ---------------------------------------------------------------------- #
+class ContaPagarCreate(BaseModel):
+    fornecedor_id: int | None = None
+    descricao: str = Field(min_length=1, max_length=255)
+    categoria_id: int
+    centro_custo_id: int | None = None
+    valor: Decimal = Field(gt=0)
+    vencimento: date
+
+
+class ContaPagarUpdate(BaseModel):
+    fornecedor_id: int | None = None
+    descricao: str | None = Field(default=None, min_length=1, max_length=255)
+    categoria_id: int | None = None
+    centro_custo_id: int | None = None
+    valor: Decimal | None = Field(default=None, gt=0)
+    vencimento: date | None = None
+
+
+class ContaPagarOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    fornecedor_id: int | None
+    descricao: str
+    categoria_id: int
+    centro_custo_id: int | None
+    valor: Decimal
+    vencimento: date
+    status: Literal["pendente", "pago", "atrasado"]
+    data_pagamento: date | None
+    origem: Literal["manual", "compra_peca", "folha"]
+    criado_em: datetime
+
+
+# ---------------------------------------------------------------------- #
+# Contas a Receber — geradas automaticamente ao faturar uma OS (Módulo 4).
+# Módulo 5 adiciona a baixa (marcar como recebido).
 # ---------------------------------------------------------------------- #
 class ContaReceberOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -77,3 +142,60 @@ class ComissaoOut(BaseModel):
     percentual_aplicado: Decimal
     data_calculo: datetime
     folha_id: int | None
+
+
+# ---------------------------------------------------------------------- #
+# Folha de Pagamento
+# ---------------------------------------------------------------------- #
+class FolhaPagamentoCreate(BaseModel):
+    funcionario_id: int
+    # Qualquer dia do mês desejado — normalizado para o dia 1 no serviço.
+    mes_referencia: date
+
+
+class FolhaDescontoCreate(BaseModel):
+    descricao: str = Field(min_length=1, max_length=255)
+    valor: Decimal = Field(gt=0)
+
+
+class FolhaDescontoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    folha_id: int
+    descricao: str
+    valor: Decimal
+
+
+class FolhaPagamentoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    funcionario_id: int
+    mes_referencia: date
+    salario_base: Decimal
+    total_comissoes: Decimal
+    total_descontos: Decimal
+    valor_liquido: Decimal
+    status: Literal["aberto", "fechado", "pago"]
+    data_fechamento: date | None
+    conta_pagar_id: int | None
+    descontos: list[FolhaDescontoOut] = []
+
+
+# ---------------------------------------------------------------------- #
+# Metas de orçamento (Orçado x Realizado)
+# ---------------------------------------------------------------------- #
+class MetaOrcamentoCreate(BaseModel):
+    categoria_id: int
+    mes_referencia: date
+    valor_meta: Decimal = Field(ge=0)
+
+
+class MetaOrcamentoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    categoria_id: int
+    mes_referencia: date
+    valor_meta: Decimal

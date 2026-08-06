@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const PODE_VER_CLIENTES = ["admin", "financeiro", "recepcao"];
+const PODE_VER_FINANCEIRO = ["admin", "financeiro"];
 
 export default function NavBar() {
   const { user, logout } = useAuth();
@@ -23,6 +24,25 @@ export default function NavBar() {
         <Link to="/os" style={styles.link}>
           Ordens de Serviço
         </Link>
+        {PODE_VER_FINANCEIRO.includes(user?.perfil) && (
+          <>
+            <Link to="/financeiro/contas-pagar" style={styles.link}>
+              Contas a Pagar
+            </Link>
+            <Link to="/financeiro/contas-receber" style={styles.link}>
+              Contas a Receber
+            </Link>
+            <Link to="/financeiro/folha" style={styles.link}>
+              Folha
+            </Link>
+            <Link to="/financeiro/orcado-realizado" style={styles.link}>
+              Orçado x Realizado
+            </Link>
+            <Link to="/financeiro/dashboard" style={styles.link}>
+              Dashboard
+            </Link>
+          </>
+        )}
       </div>
       <button onClick={logout} style={styles.button}>
         Sair

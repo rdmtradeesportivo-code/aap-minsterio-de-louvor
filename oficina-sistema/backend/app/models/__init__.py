@@ -7,7 +7,10 @@ from app.models.financeiro import (
     Comissao,
     ContaPagar,
     ContaReceber,
+    FolhaDesconto,
+    FolhaPagamento,
     Funcionario,
+    MetaOrcamento,
     RegraComissao,
 )
 from app.models.estoque import CategoriaPeca, Fornecedor, MovimentacaoEstoque, Peca
@@ -31,6 +34,9 @@ __all__ = [
     "Funcionario",
     "RegraComissao",
     "Comissao",
+    "FolhaPagamento",
+    "FolhaDesconto",
+    "MetaOrcamento",
     "Fornecedor",
     "CategoriaPeca",
     "Peca",

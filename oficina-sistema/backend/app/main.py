@@ -5,7 +5,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import get_settings
-from app.routers import auth, clientes, estoque, funcionarios, ordens_servico, usuarios, veiculos
+from app.routers import (
+    auth,
+    clientes,
+    dashboards,
+    estoque,
+    financeiro,
+    folha,
+    funcionarios,
+    metas_orcamento,
+    ordens_servico,
+    usuarios,
+    veiculos,
+)
 
 settings = get_settings()
 
@@ -33,6 +45,10 @@ app.include_router(estoque.router_pecas)
 app.include_router(estoque.router_movimentacoes)
 app.include_router(funcionarios.router)
 app.include_router(ordens_servico.router)
+app.include_router(financeiro.router)
+app.include_router(folha.router)
+app.include_router(metas_orcamento.router)
+app.include_router(dashboards.router)
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)

@@ -114,7 +114,7 @@ adicionada na migration 0002 — só é preenchido no cancelamento)*
 > por construção de qualquer relatório de faturamento/DRE que só considere OS que atingiram
 > esse estado (ver Módulo 5).
 
-## 5. Financeiro
+## 5. Financeiro — ✅ implementado (Módulo 5)
 
 **categorias_despesa**: id, nome, tipo varchar CHECK IN ('fixa','variavel','pessoal','tributos','investimentos')
 
@@ -151,6 +151,31 @@ conta_pagar_id → contas_pagar (nullable, preenchida ao fechar — categoria "P
 **metas_orcamento**: id, categoria_id → categorias_despesa, mes_referencia date,
 valor_meta numeric(12,2) *(único por categoria+mês)*
 
+> Implementado — pontos deliberados na revisão do módulo:
+> - **Fechamento de folha idempotente.** `fechar_folha` trava a linha da folha (`SELECT ...
+>   FOR UPDATE`) e confere `status == 'aberto'` antes de processar; se já estiver
+>   `fechado`/`pago`, levanta 400 sem tocar em nada. A soma de comissões do período só
+>   considera `comissoes.folha_id IS NULL`, e cada uma é marcada com `folha_id` ao fechar —
+>   então não há comissão "solta" para somar de novo. Provado com chamada dupla sequencial
+>   (bloqueada) e com duas requisições HTTP concorrentes na mesma folha (exatamente 1 sucesso +
+>   1 bloqueio, nunca duas `contas_pagar`).
+> - **DRE e dashboards usam dados reais**, nunca mockados: receita e custo de peças vêm de
+>   `ordens_servico`/`os_itens_peca`, restritos às OS que passaram pela transição para
+>   `faturado` (`os_status_log`) no período — o mesmo `calcular_valor_total` do Módulo 4 é
+>   reaproveitado, então a receita do DRE nunca diverge do valor mostrado na própria OS. Uma OS
+>   cancelada nunca chega a `faturado`, então fica de fora por construção. Comissões vêm de
+>   `comissoes.valor` (já zerado pelo cancelamento, se for o caso).
+> - **Despesas fixas do DRE** = `contas_pagar` reais nas categorias fixa/tributos/investimentos
+>   (por vencimento) **+** o `salario_base` das folhas fechadas no período — deliberadamente
+>   sem a comissão da folha, que já foi contada na linha "Comissões" (evita duplicar).
+> - **Orçado x realizado** consulta `contas_pagar` reais por categoria/mês (`vencimento` dentro
+>   do mês), nunca um número calculado à parte; alerta visual a partir de 90% da meta.
+> - **Fluxo de caixa**: série diária com entradas/saídas realizadas (por
+>   data_pagamento/data_recebimento) e projetadas (por vencimento de pendentes/atrasados),
+>   saldo acumulado a partir de zero no início do período consultado (o schema não tem uma
+>   tabela de saldo de caixa inicial).
+> - **Ponto de equilíbrio** = despesas fixas ÷ margem de contribuição %, do DRE do mês.
+
 ## Relacionamentos-chave (resumo)
 
 - `cliente 1—N veiculo`, `veiculo 1—N ordem_servico`
@@ -171,5 +196,5 @@ incrementalmente, módulo por módulo:
 2. ✅ Clientes e Veículos
 3. ✅ Estoque de Peças
 4. ✅ Ordens de Serviço
-5. ⬜ Financeiro (contas a pagar/receber, folha, orçado x realizado, dashboards, DRE)
+5. ✅ Financeiro (contas a pagar/receber, folha, orçado x realizado, dashboards, DRE)
 6. ⬜ Relatórios Gerais
