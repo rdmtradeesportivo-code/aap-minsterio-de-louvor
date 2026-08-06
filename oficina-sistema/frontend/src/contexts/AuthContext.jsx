@@ -1,52 +1,71 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import api from "../services/api";
+import { apiNext } from "../services/api";
+import { supabase } from "../services/supabaseClient";
 
 const AuthContext = createContext(null);
 
+// Busca o perfil autoritativo no backend novo — nunca confia só no
+// user_metadata do JWT do Supabase pra decisão de acesso (o metadata é
+// conveniente pra exibição, mas quem manda de verdade é a tabela
+// `usuarios`, a mesma que as RLS policies consultam).
+async function buscarUsuario() {
+  const res = await apiNext.get("/api/auth/me");
+  return res.data;
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("oficina_user");
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("oficina_token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-    // Revalida a sessão consultando /api/auth/me
-    api
-      .get("/api/auth/me")
-      .then((res) => {
-        setUser(res.data);
-        localStorage.setItem("oficina_user", JSON.stringify(res.data));
-      })
-      .catch(() => {
+    let ativo = true;
+
+    // Ao montar, o client do Supabase já tenta restaurar a sessão salva
+    // (localStorage) sozinho — só precisamos perguntar se existe uma.
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) {
+        if (ativo) setLoading(false);
+        return;
+      }
+      try {
+        const usuario = await buscarUsuario();
+        if (ativo) setUser(usuario);
+      } catch {
+        if (ativo) setUser(null);
+      } finally {
+        if (ativo) setLoading(false);
+      }
+    });
+
+    // Reage a login/logout/refresh de token disparados em qualquer lugar
+    // (ex.: outra aba, expiração de sessão).
+    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
         setUser(null);
-      })
-      .finally(() => setLoading(false));
+      }
+    });
+
+    return () => {
+      ativo = false;
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   async function login(email, senha) {
-    const form = new URLSearchParams();
-    form.append("username", email);
-    form.append("password", senha);
-
-    const res = await api.post("/api/auth/login", form, {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: senha,
     });
-
-    localStorage.setItem("oficina_token", res.data.access_token);
-    localStorage.setItem("oficina_user", JSON.stringify(res.data.usuario));
-    setUser(res.data.usuario);
-    return res.data.usuario;
+    if (error) {
+      throw new Error(error.message);
+    }
+    const usuario = await buscarUsuario();
+    setUser(usuario);
+    return usuario;
   }
 
-  function logout() {
-    localStorage.removeItem("oficina_token");
-    localStorage.removeItem("oficina_user");
+  async function logout() {
+    await supabase.auth.signOut();
     setUser(null);
   }
 

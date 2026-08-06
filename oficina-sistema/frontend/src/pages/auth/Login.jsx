@@ -18,7 +18,10 @@ export default function Login() {
       await login(email, senha);
       navigate("/dashboard");
     } catch (err) {
-      setErro(err.response?.data?.detail || "Falha ao entrar. Tente novamente.");
+      // err.message vem do Supabase Auth (ex.: "Invalid login credentials")
+      // quando o login falha; err.response?.data?.detail cobre o caso de a
+      // falha ser na chamada seguinte ao backend (/api/auth/me).
+      setErro(err.response?.data?.detail || err.message || "Falha ao entrar. Tente novamente.");
     } finally {
       setCarregando(false);
     }
