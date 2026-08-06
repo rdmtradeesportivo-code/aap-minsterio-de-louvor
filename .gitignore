@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# oficina-sistema (Python backend + Vite frontend)
+__pycache__/
+*.pyc
+.venv/
+oficina-sistema/frontend/node_modules/
+oficina-sistema/frontend/dist/
