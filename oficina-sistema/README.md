@@ -46,9 +46,37 @@ Implementado nesta etapa:
   página de detalhe do cliente com cadastro de veículos.
 - Seed de teste com 3 clientes e 4 veículos.
 
+## Módulo 3 — Estoque de Peças ✅
+
+Implementado nesta etapa:
+
+- Model, schemas e endpoints de `fornecedores`, `categorias_peca` e `pecas`.
+  Consulta liberada para qualquer perfil autenticado (inclusive mecânico,
+  que precisa conferir disponibilidade); cadastro/edição restrito a
+  `admin`/`financeiro`.
+- `estoque_atual` nunca é definido diretamente por create/update de peça —
+  só muda através de uma movimentação registrada, em `app/services/estoque.py`
+  (regra de negócio: baixa de estoque não pode ser lançada manualmente em
+  paralelo). Peça nova sempre começa com estoque 0.
+- Movimentação de **entrada** (compra): gera automaticamente um lançamento em
+  `contas_pagar` (categoria "Peças e Insumos", criada sob demanda; origem
+  `compra_peca`) e atualiza o custo de compra vigente da peça.
+- Movimentação de **ajuste** manual: exige motivo, aceita quantidade
+  positiva ou negativa, bloqueia (400) se o resultado for estoque negativo.
+  "Saída" (consumo em OS) fica para o Módulo 4, vinculada a item de OS.
+- Alerta de estoque baixo: `GET /api/pecas?somente_estoque_baixo=true` e
+  campo calculado `estoque_baixo` em toda peça retornada.
+- Models mínimos do domínio Financeiro (`CategoriaDespesa`, `CentroCusto`,
+  `ContaPagar`) entraram já, em `app/models/financeiro.py`, só para viabilizar
+  a geração automática de contas a pagar — o restante do Financeiro (contas a
+  receber, folha, comissões, orçado x realizado, DRE) é o Módulo 5.
+- Frontend: lista de peças com busca de estoque baixo, formulário de criação,
+  e registro de entrada/ajuste inline por linha.
+- Seed com 2 fornecedores, 4 categorias e 4 peças (uma delas propositalmente
+  abaixo do mínimo, para ver o alerta funcionando).
+
 Próximos módulos (ainda não implementados — apenas o schema já existe no
-banco): Estoque de Peças → Ordens de Serviço → Financeiro completo →
-Relatórios.
+banco): Ordens de Serviço → Financeiro completo → Relatórios.
 
 ## Como rodar (Docker Compose — recomendado)
 
@@ -86,6 +114,7 @@ cp .env.example .env   # ajuste DATABASE_URL para seu Postgres local
 alembic upgrade head
 python -m app.seeds.seed_usuarios
 python -m app.seeds.seed_clientes
+python -m app.seeds.seed_estoque
 uvicorn app.main:app --reload
 ```
 

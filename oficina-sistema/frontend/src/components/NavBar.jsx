@@ -17,6 +17,9 @@ export default function NavBar() {
             Clientes
           </Link>
         )}
+        <Link to="/estoque" style={styles.link}>
+          Estoque
+        </Link>
       </div>
       <button onClick={logout} style={styles.button}>
         Sair

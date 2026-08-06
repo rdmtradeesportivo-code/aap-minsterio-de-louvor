@@ -2,13 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.routers import auth, clientes, usuarios, veiculos
+from app.routers import auth, clientes, estoque, usuarios, veiculos
 
 settings = get_settings()
 
 app = FastAPI(
     title="Oficina/Funilaria — Sistema de Gestão",
-    description="API do sistema de gestão para oficina/funilaria (Módulo 1: Usuários e Autenticação)",
+    description="API do sistema de gestão para oficina/funilaria",
     version="0.1.0",
 )
 
@@ -24,6 +24,10 @@ app.include_router(auth.router)
 app.include_router(usuarios.router)
 app.include_router(clientes.router)
 app.include_router(veiculos.router)
+app.include_router(estoque.router_fornecedores)
+app.include_router(estoque.router_categorias_peca)
+app.include_router(estoque.router_pecas)
+app.include_router(estoque.router_movimentacoes)
 
 
 @app.get("/api/health", tags=["health"])

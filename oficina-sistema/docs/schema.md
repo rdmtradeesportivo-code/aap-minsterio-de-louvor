@@ -31,7 +31,7 @@ que `ENUM` nativo do Postgres ao longo do projeto).
 > pendente até o Módulo 4 (Ordens de Serviço) existir — a rota será
 > adicionada em `veiculos.py` quando houver dado para mostrar.
 
-## 3. Estoque de Peças
+## 3. Estoque de Peças — ✅ implementado (Módulo 3)
 
 **fornecedores**: id, nome, telefone, email, cnpj, endereco
 
@@ -48,6 +48,15 @@ observacao, criado_em
 
 > Regra: entrada gera `contas_pagar` automaticamente; saída só ocorre vinculada a item de OS
 > (nunca lançamento solto); ajuste manual exige motivo.
+
+> Implementado: `estoque_atual` só muda por movimentação (nunca é campo editável em
+> create/update de peça — `app/services/estoque.py` é o único lugar que altera). "saida"
+> fica para o Módulo 4 (só existe vinculada a item de OS). Entrada gera automaticamente um
+> `contas_pagar` (categoria "Peças e Insumos", get-or-create) — por isso os models mínimos
+> de Financeiro (`CategoriaDespesa`, `CentroCusto`, `ContaPagar`) já existem em
+> `app/models/financeiro.py`, ampliados quando o Módulo 5 chegar. Relatórios de estoque
+> (peças mais usadas, giro, curva ABC) ficam para o Módulo 6 (Relatórios Gerais); por ora só
+> existe o alerta de estoque baixo (`GET /api/pecas?somente_estoque_baixo=true`).
 
 ## 4. Ordens de Serviço
 
@@ -129,7 +138,7 @@ incrementalmente, módulo por módulo:
 
 1. ✅ Usuários e Autenticação
 2. ✅ Clientes e Veículos
-3. ⬜ Estoque de Peças
+3. ✅ Estoque de Peças
 4. ⬜ Ordens de Serviço
 5. ⬜ Financeiro (contas a pagar/receber, folha, orçado x realizado, dashboards, DRE)
 6. ⬜ Relatórios Gerais

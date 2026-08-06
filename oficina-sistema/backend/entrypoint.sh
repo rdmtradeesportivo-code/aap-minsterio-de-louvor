@@ -8,6 +8,7 @@ if [ "$AUTO_SEED" = "true" ]; then
   echo "Rodando seeds de teste..."
   python -m app.seeds.seed_usuarios
   python -m app.seeds.seed_clientes
+  python -m app.seeds.seed_estoque
 fi
 
 echo "Iniciando API..."

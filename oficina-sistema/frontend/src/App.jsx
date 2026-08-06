@@ -5,6 +5,7 @@ import Login from "./pages/auth/Login";
 import Dashboard from "./pages/Dashboard";
 import ClientesList from "./pages/clientes/ClientesList";
 import ClienteDetail from "./pages/clientes/ClienteDetail";
+import PecasList from "./pages/estoque/PecasList";
 
 // Recepção cadastra/edita clientes; Admin e Financeiro veem tudo.
 const PERFIS_CLIENTES = ["admin", "financeiro", "recepcao"];
@@ -36,6 +37,14 @@ export default function App() {
             element={
               <ProtectedRoute perfis={PERFIS_CLIENTES}>
                 <ClienteDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estoque"
+            element={
+              <ProtectedRoute>
+                <PecasList />
               </ProtectedRoute>
             }
           />
