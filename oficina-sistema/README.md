@@ -283,7 +283,7 @@ Peças novas da arquitetura:
 |---|---|---|
 | 1 | Tabelas de perfil + RLS em todas as tabelas | ✅ |
 | 2 | Backend Next.js — login, sessão, perfil (4 contas reais validadas) | ✅ |
-| 3 | Clientes e Veículos | pendente |
+| 3 | Clientes e Veículos | ✅ |
 | 4 | Estoque (com RPC de concorrência) | pendente |
 | 5 | Ordens de Serviço (com upload de fotos no Storage) | pendente |
 | 6 | Financeiro completo | pendente |
