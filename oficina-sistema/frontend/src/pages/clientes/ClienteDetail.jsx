@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import NavBar from "../../components/NavBar";
-import api from "../../services/api";
+import { apiNext as api } from "../../services/api";
 
 const VEICULO_VAZIO = { placa: "", modelo: "", marca: "", ano: "", cor: "", km_atual: "" };
 
@@ -35,8 +35,14 @@ export default function ClienteDetail() {
   const [erro, setErro] = useState("");
 
   async function carregar() {
-    const res = await api.get(`/api/clientes/${id}`);
-    setCliente(res.data);
+    try {
+      const res = await api.get(`/api/clientes/${id}`);
+      setCliente(res.data);
+    } catch (err) {
+      // Sem isso, uma falha aqui deixava a tela travada em "Carregando..."
+      // pra sempre, sem nenhuma pista do que deu errado.
+      setErro(err.response?.data?.detail || "Não foi possível carregar o cliente.");
+    }
   }
 
   useEffect(() => {
@@ -109,7 +115,9 @@ export default function ClienteDetail() {
     return (
       <div style={{ fontFamily: "system-ui, sans-serif" }}>
         <NavBar />
-        <p style={{ padding: 32 }}>Carregando...</p>
+        <p style={{ padding: 32, color: erro ? "#dc2626" : undefined }}>
+          {erro || "Carregando..."}
+        </p>
       </div>
     );
   }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../../components/NavBar";
-import api from "../../services/api";
+import { apiNext as api } from "../../services/api";
 
 const CAMPOS_VAZIOS = { nome: "", telefone: "", email: "", cpf_cnpj: "", endereco: "" };
 
@@ -15,9 +15,14 @@ export default function ClientesList() {
 
   async function carregar(termo = "") {
     setCarregando(true);
+    setErro("");
     try {
       const res = await api.get("/api/clientes", { params: termo ? { busca: termo } : {} });
       setClientes(res.data);
+    } catch (err) {
+      // Sem isso, uma falha aqui (rede, sessão expirada, etc.) deixava a
+      // lista silenciosamente vazia — indistinguível de "não há clientes".
+      setErro(err.response?.data?.detail || "Não foi possível carregar os clientes.");
     } finally {
       setCarregando(false);
     }
@@ -118,6 +123,8 @@ export default function ClientesList() {
             style={{ ...styles.input, width: "320px" }}
           />
         </form>
+
+        {!mostrarForm && erro && <p style={{ color: "#dc2626", fontSize: "13px" }}>{erro}</p>}
 
         {carregando ? (
           <p>Carregando...</p>
