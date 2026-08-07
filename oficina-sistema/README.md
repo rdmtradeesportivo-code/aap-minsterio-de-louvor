@@ -278,10 +278,18 @@ Peças novas da arquitetura:
   as OS em que está envolvido; recepção não acessa nada do financeiro).
   Lógica de API só entra quando a regra é complexa demais para RLS puro.
 - **Estoque**: a baixa concorrente de peça (antes um `SELECT ... FOR
-  UPDATE` em Python) será reimplementada como função Postgres
-  (RPC do Supabase) — ainda não migrado (ver status por etapa abaixo).
-- **Fotos de OS**: vão passar de disco local para Supabase Storage —
-  ainda não migrado.
+  UPDATE` em Python) foi reimplementada como função Postgres `SECURITY
+  DEFINER` (RPC do Supabase) — ver Etapa 4 abaixo.
+- **Ordens de Serviço**: criação, itens de peça/serviço, funcionários
+  responsáveis, fluxo de status (com cálculo automático de comissão ao
+  concluir), cancelamento (com estorno de estoque e zeragem de comissão)
+  e faturamento (com geração de parcelas) foram reimplementados como
+  funções Postgres `SECURITY DEFINER` — ver Etapa 5 abaixo.
+- **Fotos de OS**: passaram de disco local (servido sem autenticação)
+  para um bucket privado do Supabase Storage (`os-fotos`), com RLS em
+  `storage.objects` espelhando a mesma regra `pode_ver_os()` usada nas
+  próprias OS — cada foto é entregue como signed URL de curta duração
+  (1h), nunca por um caminho estático público.
 
 ### Status por etapa
 
@@ -291,7 +299,7 @@ Peças novas da arquitetura:
 | 2 | Backend Next.js — login, sessão, perfil (4 contas reais validadas) | ✅ |
 | 3 | Clientes e Veículos | ✅ |
 | 4 | Estoque (com RPC de concorrência) | ✅ |
-| 5 | Ordens de Serviço (com upload de fotos no Storage) | pendente |
+| 5 | Ordens de Serviço (com upload de fotos no Storage) | ✅ |
 | 6 | Financeiro completo | pendente |
 | 7 | Relatórios Gerais | pendente |
 
@@ -332,6 +340,47 @@ isolar a garantia no nível do banco):
   frescos (10→6→2) confirmando serialização, não só sorte de ordenação.
 - Dados de teste e as extensões (`http`, `pg_net`) usadas só para a prova
   foram removidos do banco depois.
+
+**Etapa 5 — Ordens de Serviço**: a baixa de peça pela OS
+(`adicionar_item_peca_os`, RPC do Supabase) reusa exatamente a mesma
+técnica de lock (`SELECT ... FOR UPDATE` na linha da peça) da Etapa 4, e
+foi provada com a mesma rigor de corrida real via `pg_net`, contra o
+deploy de produção já corrigido (ver nota abaixo sobre o incidente de
+deploy):
+- 2 requisições concorrentes em OS diferentes, mesma peça (estoque 10,
+  cada uma pedindo -6): exatamente 1 sucesso + 1 bloqueio (`VALIDATION:
+  Estoque insuficiente ... disponível: 4.00`), estoque final 4 — a
+  bloqueada viu o saldo já atualizado pela vencedora, não o valor obsoleto.
+- Repetido com 3 vias contra o saldo restante (estoque 4, três pedidos de
+  -2 cada): exatamente 2 sucessos + 1 bloqueio (`disponível: 0.00`),
+  estoque final 0, exatamente 1 linha em `os_itens_peca` e 1 em
+  `movimentacoes_estoque` por sucesso — nenhuma duplicata, nenhum saldo
+  negativo.
+- Validação funcional completa também rodada contra produção: fluxo de
+  status completo (orçamento→aprovado→em_execução→concluído, incluindo o
+  ramo aguardando_peça), comissão calculada automaticamente ao concluir
+  (com override por `regras_comissao` e fallback pro percentual padrão do
+  funcionário, ambos conferidos), cancelamento com estorno de estoque e
+  zeragem de comissão, faturamento com divisão de parcelas (última parcela
+  absorve o resto do arredondamento — ex.: R$140,00 em 3x → 46,67 + 46,67 +
+  46,66), upload de foto no bucket privado `os-fotos` com o signed URL
+  retornado de fato baixando os bytes enviados, geração de PDF de
+  orçamento (`%PDF-1.7` válido) e RLS nos 4 perfis (mecânico só vê as OS em
+  que está envolvido; recepção e mecânico bloqueados de faturar; acesso a
+  `funcionarios` e ao resumo de `clientes`/`veiculos` embutido na OS
+  liberado pra todos os perfis autenticados, corrigindo duas policies
+  restritivas demais herdadas da Etapa 1). Dados de teste e as extensões
+  (`http`, `pg_net`) foram removidos do banco depois.
+- **Incidente de deploy identificado e corrigido durante a validação**: o
+  primeiro deploy do backend em produção ficou retornando 500 em toda
+  rota (`NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY são
+  obrigatórias`) porque o Next.js embute variáveis `NEXT_PUBLIC_*` em
+  **tempo de build**, e o deploy não incluiu o `.env.production` do
+  projeto — nenhuma configuração via painel do Vercel resolve valores já
+  compilados como `undefined`. Corrigido reincluindo o `.env.production`
+  no deploy; confirmado com `GET /api/clientes` e `POST
+  /api/ordens-servico` reais retornando 200/201 antes de seguir com a
+  prova de concorrência.
 
 ## Como rodar (Docker Compose — recomendado)
 

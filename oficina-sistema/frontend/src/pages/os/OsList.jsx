@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import NavBar from "../../components/NavBar";
 import StatusBadge from "../../components/StatusBadge";
 import { useAuth } from "../../contexts/AuthContext";
-import api from "../../services/api";
+import { apiNext as api } from "../../services/api";
 import { colors, ui } from "../../theme";
 import { NOMES_STATUS } from "./statusUtils";
 
@@ -25,10 +25,13 @@ export default function OsList() {
 
   async function carregar() {
     setCarregando(true);
+    setErro("");
     try {
       const params = statusFiltro ? { status_filtro: statusFiltro } : {};
       const res = await api.get("/api/ordens-servico", { params });
       setOrdens(res.data);
+    } catch (err) {
+      setErro(err.response?.data?.detail || "Não foi possível carregar as ordens de serviço.");
     } finally {
       setCarregando(false);
     }
@@ -151,6 +154,8 @@ export default function OsList() {
             </button>
           </form>
         )}
+
+        {erro && !mostrarForm && <p style={{ color: colors.danger, fontSize: "13px" }}>{erro}</p>}
 
         <div style={{ margin: "20px 0" }}>
           <select

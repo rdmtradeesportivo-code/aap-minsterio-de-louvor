@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import NavBar from "../../components/NavBar";
 import StatusBadge from "../../components/StatusBadge";
 import { useAuth } from "../../contexts/AuthContext";
-import api from "../../services/api";
+import { apiNext as api } from "../../services/api";
 import { colors, ui } from "../../theme";
 import { NOMES_STATUS, STATUS_CANCELAVEIS, TRANSICOES_PERMITIDAS } from "./statusUtils";
 
@@ -30,8 +30,13 @@ export default function OsDetail() {
   const [arquivoFoto, setArquivoFoto] = useState(null);
 
   async function carregar() {
-    const res = await api.get(`/api/ordens-servico/${id}`);
-    setOs(res.data);
+    setErro("");
+    try {
+      const res = await api.get(`/api/ordens-servico/${id}`);
+      setOs(res.data);
+    } catch (err) {
+      setErro(err.response?.data?.detail || "Não foi possível carregar a ordem de serviço.");
+    }
   }
 
   useEffect(() => {
@@ -179,7 +184,9 @@ export default function OsDetail() {
     return (
       <div style={ui.page}>
         <NavBar />
-        <p style={{ padding: 32 }}>Carregando...</p>
+        <p style={{ padding: 32, color: erro ? colors.danger : undefined }}>
+          {erro || "Carregando..."}
+        </p>
       </div>
     );
   }
@@ -442,9 +449,9 @@ export default function OsDetail() {
         <h2 style={ui.h2}>Fotos</h2>
         <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
           {os.fotos.map((foto) => (
-            <a key={foto.id} href={`${import.meta.env.VITE_API_URL}/uploads/${foto.caminho_arquivo}`} target="_blank" rel="noreferrer">
+            <a key={foto.id} href={foto.url} target="_blank" rel="noreferrer">
               <img
-                src={`${import.meta.env.VITE_API_URL}/uploads/${foto.caminho_arquivo}`}
+                src={foto.url}
                 alt={foto.tipo}
                 style={{ width: "120px", height: "90px", objectFit: "cover", borderRadius: "6px", border: `1px solid ${colors.border}` }}
               />
