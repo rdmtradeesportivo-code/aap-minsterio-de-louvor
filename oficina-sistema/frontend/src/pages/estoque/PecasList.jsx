@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import NavBar from "../../components/NavBar";
 import { useAuth } from "../../contexts/AuthContext";
-import api from "../../services/api";
+import { apiNext as api } from "../../services/api";
 import { colors, ui } from "../../theme";
 
 const PODE_GERENCIAR = ["admin", "financeiro"];
@@ -41,6 +41,7 @@ export default function PecasList() {
 
   async function carregar() {
     setCarregando(true);
+    setErro("");
     try {
       const params = somenteEstoqueBaixo ? { somente_estoque_baixo: true } : {};
       const [resPecas, resCategorias, resFornecedores] = await Promise.all([
@@ -51,6 +52,10 @@ export default function PecasList() {
       setPecas(resPecas.data);
       setCategorias(resCategorias.data);
       setFornecedores(resFornecedores.data);
+    } catch (err) {
+      // Mesmo cuidado do módulo de Clientes: sem isso, uma falha aqui
+      // deixava a lista silenciosamente vazia.
+      setErro(err.response?.data?.detail || "Não foi possível carregar o estoque.");
     } finally {
       setCarregando(false);
     }
@@ -252,6 +257,8 @@ export default function PecasList() {
           />
           Mostrar apenas peças com estoque baixo
         </label>
+
+        {!mostrarFormNovaPeca && erro && <p style={{ color: colors.danger, fontSize: "13px" }}>{erro}</p>}
 
         {carregando ? (
           <p>Carregando...</p>

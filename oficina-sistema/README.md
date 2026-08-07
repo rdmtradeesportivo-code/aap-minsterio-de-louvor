@@ -290,7 +290,7 @@ Peças novas da arquitetura:
 | 1 | Tabelas de perfil + RLS em todas as tabelas | ✅ |
 | 2 | Backend Next.js — login, sessão, perfil (4 contas reais validadas) | ✅ |
 | 3 | Clientes e Veículos | ✅ |
-| 4 | Estoque (com RPC de concorrência) | pendente |
+| 4 | Estoque (com RPC de concorrência) | ✅ |
 | 5 | Ordens de Serviço (com upload de fotos no Storage) | pendente |
 | 6 | Financeiro completo | pendente |
 | 7 | Relatórios Gerais | pendente |
@@ -311,6 +311,27 @@ Vercel (nunca contra um servidor local), usando a extensão `http` do
 Postgres do Supabase como ponte para simular chamadas autenticadas
 (incluindo tokens reais emitidos pelo Supabase Auth) direto de dentro da
 infraestrutura do Supabase.
+
+**Etapa 4 — concorrência de estoque**: a baixa/ajuste de peça foi
+reimplementada como uma função Postgres `SECURITY DEFINER`
+(`registrar_movimentacao_estoque`, RPC do Supabase) que trava a linha da
+peça com `SELECT ... FOR UPDATE` antes de checar e gravar o novo saldo —
+a mesma técnica do `SELECT ... FOR UPDATE` do SQLAlchemy no backend
+antigo, agora vivendo dentro do banco (serializa qualquer chamador, não só
+o Next.js). Provado com corrida real usando `pg_net` (dispatch assíncrono
+direto contra o endpoint REST do Supabase, sem passar pelo Next.js, para
+isolar a garantia no nível do banco):
+- 2 requisições concorrentes de ajuste, cada uma individualmente válida
+  (estoque 10, cada uma pedindo -6) mas conjuntamente inválidas: resultado
+  exatamente 1 sucesso + 1 bloqueio (`VALIDATION`), estoque final 4 —
+  nunca negativo. A que foi bloqueada só conseguiu rodar sua checagem
+  *depois* da outra commitar (viu `atual: 4.00`, não o valor obsoleto
+  `10.00`), prova de que o lock serializou as duas transações.
+- Repetido com 3 vias (estoque 10, três pedidos de -4 cada): exatamente 2
+  sucessos + 1 bloqueio, estoque final 2, com a mesma cadeia de valores
+  frescos (10→6→2) confirmando serialização, não só sorte de ordenação.
+- Dados de teste e as extensões (`http`, `pg_net`) usadas só para a prova
+  foram removidos do banco depois.
 
 ## Como rodar (Docker Compose — recomendado)
 
