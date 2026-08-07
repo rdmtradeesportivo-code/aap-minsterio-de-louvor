@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../../components/NavBar";
 import { apiNext as api } from "../../services/api";
+import { colors, ui } from "../../theme";
 
 const CAMPOS_VAZIOS = { nome: "", telefone: "", email: "", cpf_cnpj: "", endereco: "" };
 
@@ -51,65 +52,65 @@ export default function ClientesList() {
   }
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif" }}>
+    <div style={ui.page}>
       <NavBar />
 
-      <div style={{ padding: "32px" }}>
+      <div style={ui.content}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={{ marginTop: 0 }}>Clientes</h1>
-          <button onClick={() => setMostrarForm((v) => !v)} style={styles.primaryButton}>
+          <h1 style={ui.h1}>Clientes</h1>
+          <button onClick={() => setMostrarForm((v) => !v)} style={ui.primaryButton}>
             {mostrarForm ? "Cancelar" : "+ Novo cliente"}
           </button>
         </div>
 
         {mostrarForm && (
-          <form onSubmit={handleCriar} style={styles.formCard}>
-            <div style={styles.formGrid}>
-              <label style={styles.label}>
+          <form onSubmit={handleCriar} style={ui.formCard}>
+            <div style={ui.formGrid}>
+              <label style={ui.label}>
                 Nome *
                 <input
                   required
-                  style={styles.input}
+                  style={ui.input}
                   value={form.nome}
                   onChange={(e) => setForm({ ...form, nome: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Telefone
                 <input
-                  style={styles.input}
+                  style={ui.input}
                   value={form.telefone}
                   onChange={(e) => setForm({ ...form, telefone: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 E-mail
                 <input
                   type="email"
-                  style={styles.input}
+                  style={ui.input}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 CPF/CNPJ
                 <input
-                  style={styles.input}
+                  style={ui.input}
                   value={form.cpf_cnpj}
                   onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })}
                 />
               </label>
-              <label style={{ ...styles.label, gridColumn: "1 / -1" }}>
+              <label style={{ ...ui.label, gridColumn: "1 / -1" }}>
                 Endereço
                 <input
-                  style={styles.input}
+                  style={ui.input}
                   value={form.endereco}
                   onChange={(e) => setForm({ ...form, endereco: e.target.value })}
                 />
               </label>
             </div>
-            {erro && <p style={{ color: "#dc2626", fontSize: "13px" }}>{erro}</p>}
-            <button type="submit" style={styles.primaryButton}>
+            {erro && <p style={{ color: colors.danger, fontSize: "13px" }}>{erro}</p>}
+            <button type="submit" style={ui.primaryButton}>
               Salvar cliente
             </button>
           </form>
@@ -120,38 +121,40 @@ export default function ClientesList() {
             placeholder="Buscar por nome, telefone ou CPF/CNPJ..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            style={{ ...styles.input, width: "320px" }}
+            style={{ ...ui.input, width: "320px" }}
           />
         </form>
 
-        {!mostrarForm && erro && <p style={{ color: "#dc2626", fontSize: "13px" }}>{erro}</p>}
+        {!mostrarForm && erro && <p style={{ color: colors.danger, fontSize: "13px" }}>{erro}</p>}
 
         {carregando ? (
           <p>Carregando...</p>
         ) : (
-          <table style={styles.table}>
+          <table style={{ ...ui.table, maxWidth: "800px" }} className="data-table">
             <thead>
               <tr>
-                <th style={styles.th}>Nome</th>
-                <th style={styles.th}>Telefone</th>
-                <th style={styles.th}>CPF/CNPJ</th>
-                <th style={styles.th}></th>
+                <th style={ui.th}>Nome</th>
+                <th style={ui.th}>Telefone</th>
+                <th style={ui.th}>CPF/CNPJ</th>
+                <th style={ui.th}></th>
               </tr>
             </thead>
             <tbody>
               {clientes.map((c) => (
                 <tr key={c.id}>
-                  <td style={styles.td}>{c.nome}</td>
-                  <td style={styles.td}>{c.telefone || "-"}</td>
-                  <td style={styles.td}>{c.cpf_cnpj || "-"}</td>
-                  <td style={styles.td}>
-                    <Link to={`/clientes/${c.id}`}>ver veículos</Link>
+                  <td style={ui.td}>{c.nome}</td>
+                  <td style={ui.td}>{c.telefone || "-"}</td>
+                  <td style={ui.td}>{c.cpf_cnpj || "-"}</td>
+                  <td style={ui.td}>
+                    <Link to={`/clientes/${c.id}`} style={{ color: colors.accent }}>
+                      ver veículos
+                    </Link>
                   </td>
                 </tr>
               ))}
               {clientes.length === 0 && (
                 <tr>
-                  <td style={styles.td} colSpan={4}>
+                  <td style={ui.td} colSpan={4}>
                     Nenhum cliente encontrado.
                   </td>
                 </tr>
@@ -163,43 +166,3 @@ export default function ClientesList() {
     </div>
   );
 }
-
-const styles = {
-  primaryButton: {
-    padding: "8px 14px",
-    borderRadius: "6px",
-    border: "none",
-    background: "#0f172a",
-    color: "#fff",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  formCard: {
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    borderRadius: "10px",
-    padding: "20px",
-    marginTop: "16px",
-    maxWidth: "600px",
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginBottom: "12px",
-  },
-  label: { fontSize: "13px", color: "#334155" },
-  input: {
-    display: "block",
-    width: "100%",
-    padding: "8px 10px",
-    marginTop: "4px",
-    borderRadius: "6px",
-    border: "1px solid #cbd5e1",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  },
-  table: { width: "100%", borderCollapse: "collapse", maxWidth: "800px" },
-  th: { textAlign: "left", borderBottom: "2px solid #e2e8f0", padding: "8px", fontSize: "13px" },
-  td: { borderBottom: "1px solid #f1f5f9", padding: "8px", fontSize: "14px" },
-};

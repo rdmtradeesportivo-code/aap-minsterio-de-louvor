@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import NavBar from "../../components/NavBar";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
+import { colors, ui } from "../../theme";
 
 const PODE_GERENCIAR = ["admin", "financeiro"];
 
@@ -128,44 +129,44 @@ export default function PecasList() {
   }
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif" }}>
+    <div style={ui.page}>
       <NavBar />
 
-      <div style={{ padding: "32px" }}>
+      <div style={ui.content}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={{ marginTop: 0 }}>Estoque de Peças</h1>
+          <h1 style={ui.h1}>Estoque de Peças</h1>
           {podeGerenciar && (
-            <button onClick={() => setMostrarFormNovaPeca((v) => !v)} style={styles.primaryButton}>
+            <button onClick={() => setMostrarFormNovaPeca((v) => !v)} style={ui.primaryButton}>
               {mostrarFormNovaPeca ? "Cancelar" : "+ Nova peça"}
             </button>
           )}
         </div>
 
         {mostrarFormNovaPeca && (
-          <form onSubmit={handleCriarPeca} style={styles.formCard}>
-            <div style={styles.formGrid}>
-              <label style={styles.label}>
+          <form onSubmit={handleCriarPeca} style={ui.formCard}>
+            <div style={ui.formGrid}>
+              <label style={ui.label}>
                 Código *
                 <input
                   required
-                  style={styles.input}
+                  style={ui.input}
                   value={formPeca.codigo}
                   onChange={(e) => setFormPeca({ ...formPeca, codigo: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Descrição *
                 <input
                   required
-                  style={styles.input}
+                  style={ui.input}
                   value={formPeca.descricao}
                   onChange={(e) => setFormPeca({ ...formPeca, descricao: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Categoria
                 <select
-                  style={styles.input}
+                  style={ui.input}
                   value={formPeca.categoria_id}
                   onChange={(e) => setFormPeca({ ...formPeca, categoria_id: e.target.value })}
                 >
@@ -177,10 +178,10 @@ export default function PecasList() {
                   ))}
                 </select>
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Fornecedor
                 <select
-                  style={styles.input}
+                  style={ui.input}
                   value={formPeca.fornecedor_id}
                   onChange={(e) => setFormPeca({ ...formPeca, fornecedor_id: e.target.value })}
                 >
@@ -192,52 +193,52 @@ export default function PecasList() {
                   ))}
                 </select>
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Unidade
                 <input
                   placeholder="UN, L, KG..."
-                  style={styles.input}
+                  style={ui.input}
                   value={formPeca.unidade_medida}
                   onChange={(e) => setFormPeca({ ...formPeca, unidade_medida: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Estoque mínimo
                 <input
                   type="number"
                   step="0.01"
-                  style={styles.input}
+                  style={ui.input}
                   value={formPeca.estoque_minimo}
                   onChange={(e) => setFormPeca({ ...formPeca, estoque_minimo: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Custo de compra
                 <input
                   type="number"
                   step="0.01"
-                  style={styles.input}
+                  style={ui.input}
                   value={formPeca.custo_compra}
                   onChange={(e) => setFormPeca({ ...formPeca, custo_compra: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Preço de venda
                 <input
                   type="number"
                   step="0.01"
-                  style={styles.input}
+                  style={ui.input}
                   value={formPeca.preco_venda}
                   onChange={(e) => setFormPeca({ ...formPeca, preco_venda: e.target.value })}
                 />
               </label>
             </div>
-            <p style={{ fontSize: "12px", color: "#64748b" }}>
+            <p style={{ fontSize: "12px", color: colors.textSecondary }}>
               O estoque inicial começa em 0 — registre uma "entrada" logo em seguida para dar
               entrada na quantidade comprada.
             </p>
-            {erro && <p style={{ color: "#dc2626", fontSize: "13px" }}>{erro}</p>}
-            <button type="submit" style={styles.primaryButton}>
+            {erro && <p style={{ color: colors.danger, fontSize: "13px" }}>{erro}</p>}
+            <button type="submit" style={ui.primaryButton}>
               Salvar peça
             </button>
           </form>
@@ -255,39 +256,39 @@ export default function PecasList() {
         {carregando ? (
           <p>Carregando...</p>
         ) : (
-          <table style={styles.table}>
+          <table style={ui.table} className="data-table">
             <thead>
               <tr>
-                <th style={styles.th}>Código</th>
-                <th style={styles.th}>Descrição</th>
-                <th style={styles.th}>Categoria</th>
-                <th style={styles.th}>Estoque</th>
-                <th style={styles.th}>Mín.</th>
-                <th style={styles.th}>Custo</th>
-                <th style={styles.th}>Venda</th>
-                {podeGerenciar && <th style={styles.th}></th>}
+                <th style={ui.th}>Código</th>
+                <th style={ui.th}>Descrição</th>
+                <th style={ui.th}>Categoria</th>
+                <th style={ui.th}>Estoque</th>
+                <th style={ui.th}>Mín.</th>
+                <th style={ui.th}>Custo</th>
+                <th style={ui.th}>Venda</th>
+                {podeGerenciar && <th style={ui.th}></th>}
               </tr>
             </thead>
             <tbody>
               {pecas.map((p) => (
                 <Fragment key={p.id}>
                   <tr>
-                    <td style={styles.td}>{p.codigo}</td>
-                    <td style={styles.td}>{p.descricao}</td>
-                    <td style={styles.td}>{nomeCategoria(p.categoria_id)}</td>
-                    <td style={styles.td}>
+                    <td style={ui.td}>{p.codigo}</td>
+                    <td style={ui.td}>{p.descricao}</td>
+                    <td style={ui.td}>{nomeCategoria(p.categoria_id)}</td>
+                    <td style={ui.td}>
                       {p.estoque_atual} {p.unidade_medida || ""}
-                      {p.estoque_baixo && <span style={styles.badge}>estoque baixo</span>}
+                      {p.estoque_baixo && <span style={ui.badge}>estoque baixo</span>}
                     </td>
-                    <td style={styles.td}>{p.estoque_minimo}</td>
-                    <td style={styles.td}>R$ {p.custo_compra}</td>
-                    <td style={styles.td}>R$ {p.preco_venda}</td>
+                    <td style={ui.td}>{p.estoque_minimo}</td>
+                    <td style={ui.td}>R$ {p.custo_compra}</td>
+                    <td style={ui.td}>R$ {p.preco_venda}</td>
                     {podeGerenciar && (
-                      <td style={styles.td}>
-                        <button onClick={() => abrirMovimentacao(p.id, "entrada")} style={styles.linkButton}>
+                      <td style={ui.td}>
+                        <button onClick={() => abrirMovimentacao(p.id, "entrada")} style={ui.linkButton}>
                           entrada
                         </button>{" "}
-                        <button onClick={() => abrirMovimentacao(p.id, "ajuste")} style={styles.linkButton}>
+                        <button onClick={() => abrirMovimentacao(p.id, "ajuste")} style={ui.linkButton}>
                           ajuste
                         </button>
                       </td>
@@ -295,7 +296,7 @@ export default function PecasList() {
                   </tr>
                   {movimentandoPecaId === p.id && (
                     <tr>
-                      <td style={styles.td} colSpan={8}>
+                      <td style={ui.td} colSpan={8}>
                         {tipoMov === "entrada" ? (
                           <form
                             onSubmit={(e) => handleSalvarEntrada(e, p.id)}
@@ -307,7 +308,7 @@ export default function PecasList() {
                               type="number"
                               step="0.01"
                               placeholder="Quantidade"
-                              style={{ ...styles.input, width: "110px" }}
+                              style={{ ...ui.input, width: "110px" }}
                               value={formEntrada.quantidade}
                               onChange={(e) => setFormEntrada({ ...formEntrada, quantidade: e.target.value })}
                             />
@@ -315,27 +316,27 @@ export default function PecasList() {
                               type="number"
                               step="0.01"
                               placeholder={`Custo unit. (padrão R$ ${p.custo_compra})`}
-                              style={{ ...styles.input, width: "180px" }}
+                              style={{ ...ui.input, width: "180px" }}
                               value={formEntrada.custo_unitario}
                               onChange={(e) => setFormEntrada({ ...formEntrada, custo_unitario: e.target.value })}
                             />
                             <input
                               required
                               type="date"
-                              style={{ ...styles.input, width: "150px" }}
+                              style={{ ...ui.input, width: "150px" }}
                               value={formEntrada.vencimento}
                               onChange={(e) => setFormEntrada({ ...formEntrada, vencimento: e.target.value })}
                             />
                             <input
                               placeholder="Observação"
-                              style={{ ...styles.input, width: "150px" }}
+                              style={{ ...ui.input, width: "150px" }}
                               value={formEntrada.observacao}
                               onChange={(e) => setFormEntrada({ ...formEntrada, observacao: e.target.value })}
                             />
-                            <button type="submit" style={styles.primaryButton}>
+                            <button type="submit" style={ui.primaryButton}>
                               Salvar
                             </button>
-                            <button type="button" onClick={() => setMovimentandoPecaId(null)} style={styles.secondaryButton}>
+                            <button type="button" onClick={() => setMovimentandoPecaId(null)} style={ui.secondaryButton}>
                               Cancelar
                             </button>
                           </form>
@@ -350,32 +351,32 @@ export default function PecasList() {
                               type="number"
                               step="0.01"
                               placeholder="Quantidade (+/-)"
-                              style={{ ...styles.input, width: "140px" }}
+                              style={{ ...ui.input, width: "140px" }}
                               value={formAjuste.quantidade}
                               onChange={(e) => setFormAjuste({ ...formAjuste, quantidade: e.target.value })}
                             />
                             <input
                               required
                               placeholder="Motivo (obrigatório)"
-                              style={{ ...styles.input, width: "220px" }}
+                              style={{ ...ui.input, width: "220px" }}
                               value={formAjuste.motivo}
                               onChange={(e) => setFormAjuste({ ...formAjuste, motivo: e.target.value })}
                             />
                             <input
                               placeholder="Observação"
-                              style={{ ...styles.input, width: "150px" }}
+                              style={{ ...ui.input, width: "150px" }}
                               value={formAjuste.observacao}
                               onChange={(e) => setFormAjuste({ ...formAjuste, observacao: e.target.value })}
                             />
-                            <button type="submit" style={styles.primaryButton}>
+                            <button type="submit" style={ui.primaryButton}>
                               Salvar
                             </button>
-                            <button type="button" onClick={() => setMovimentandoPecaId(null)} style={styles.secondaryButton}>
+                            <button type="button" onClick={() => setMovimentandoPecaId(null)} style={ui.secondaryButton}>
                               Cancelar
                             </button>
                           </form>
                         )}
-                        {erro && <p style={{ color: "#dc2626", fontSize: "13px", marginTop: "6px" }}>{erro}</p>}
+                        {erro && <p style={{ color: colors.danger, fontSize: "13px", marginTop: "6px" }}>{erro}</p>}
                       </td>
                     </tr>
                   )}
@@ -383,7 +384,7 @@ export default function PecasList() {
               ))}
               {pecas.length === 0 && (
                 <tr>
-                  <td style={styles.td} colSpan={8}>
+                  <td style={ui.td} colSpan={8}>
                     Nenhuma peça encontrada.
                   </td>
                 </tr>
@@ -395,70 +396,3 @@ export default function PecasList() {
     </div>
   );
 }
-
-const styles = {
-  primaryButton: {
-    padding: "8px 14px",
-    borderRadius: "6px",
-    border: "none",
-    background: "#0f172a",
-    color: "#fff",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  secondaryButton: {
-    padding: "8px 14px",
-    borderRadius: "6px",
-    border: "1px solid #cbd5e1",
-    background: "#fff",
-    color: "#334155",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  linkButton: {
-    border: "none",
-    background: "none",
-    color: "#2563eb",
-    cursor: "pointer",
-    fontSize: "13px",
-    textDecoration: "underline",
-    padding: 0,
-  },
-  badge: {
-    marginLeft: "8px",
-    padding: "2px 8px",
-    borderRadius: "999px",
-    background: "#fef2f2",
-    color: "#dc2626",
-    fontSize: "11px",
-    fontWeight: 600,
-  },
-  formCard: {
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    borderRadius: "10px",
-    padding: "20px",
-    marginTop: "16px",
-    maxWidth: "700px",
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginBottom: "8px",
-  },
-  label: { fontSize: "13px", color: "#334155" },
-  input: {
-    display: "block",
-    width: "100%",
-    padding: "8px 10px",
-    marginTop: "4px",
-    borderRadius: "6px",
-    border: "1px solid #cbd5e1",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  },
-  table: { width: "100%", borderCollapse: "collapse", maxWidth: "1000px" },
-  th: { textAlign: "left", borderBottom: "2px solid #e2e8f0", padding: "8px", fontSize: "13px" },
-  td: { borderBottom: "1px solid #f1f5f9", padding: "8px", fontSize: "14px" },
-};

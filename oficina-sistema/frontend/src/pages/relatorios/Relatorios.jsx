@@ -73,7 +73,7 @@ export default function Relatorios() {
           Custo de peças usa o custo snapshotado no momento da venda — se o preço de compra da peça mudar
           depois, o lucro histórico da OS não muda.
         </p>
-        <table style={styles.table}>
+        <table style={styles.table} className="data-table">
           <thead>
             <tr>
               <th style={styles.th}>OS</th>
@@ -140,7 +140,7 @@ export default function Relatorios() {
             Total em atraso: R$ {totalAtrasado.toFixed(2)}
           </p>
         )}
-        <table style={styles.table}>
+        <table style={styles.table} className="data-table">
           <thead>
             <tr>
               <th style={styles.th}>Cliente</th>

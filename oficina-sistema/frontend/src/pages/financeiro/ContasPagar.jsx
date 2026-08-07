@@ -153,7 +153,7 @@ export default function ContasPagar() {
         {carregando ? (
           <p>Carregando...</p>
         ) : (
-          <table style={styles.table}>
+          <table style={styles.table} className="data-table">
             <thead>
               <tr>
                 <th style={styles.th}>Descrição</th>

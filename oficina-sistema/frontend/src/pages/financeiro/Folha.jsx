@@ -137,7 +137,7 @@ export default function Folha() {
         {carregando ? (
           <p>Carregando...</p>
         ) : (
-          <table style={{ ...styles.table, marginTop: "20px" }}>
+          <table style={{ ...styles.table, marginTop: "20px" }} className="data-table">
             <thead>
               <tr>
                 <th style={styles.th}>Funcionário</th>

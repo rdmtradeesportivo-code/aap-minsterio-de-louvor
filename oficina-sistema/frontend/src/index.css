@@ -1,0 +1,44 @@
+/* Reset mínimo + regras que estilo inline não consegue expressar (hover,
+   zebra, scrollbar). Cores/fontes centralizadas em theme.js — aqui só o que
+   precisa ser CSS de verdade. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f4f4f5;
+  color: #1a1a1d;
+}
+
+/* Tabelas de dados — linha zebrada + destaque leve no hover, sem perder
+   contraste com o texto (regra explícita do rebranding: não sacrificar
+   legibilidade das telas com muita tabela). */
+.data-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.data-table tbody tr:hover {
+  background: #ffede0;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f4f5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 6px;
+}

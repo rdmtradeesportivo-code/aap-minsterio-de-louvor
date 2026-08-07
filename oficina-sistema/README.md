@@ -1,10 +1,16 @@
-# Sistema de Gestão para Oficina/Funilaria
+# Torque — Sistema de Gestão para Oficina/Funilaria
 
 Sistema web de gestão para oficina/funilaria, com foco em controle financeiro
 detalhado (contas a pagar/receber, folha de pagamento com comissões, orçado x
 realizado, DRE simplificado). Construído de forma incremental, módulo por
 módulo — ver `docs/schema.md` para o schema completo e o status de cada
 módulo.
+
+O produto se chama **Torque**. Identidade visual: base grafite industrial
+(`#1A1A1D`) + laranja de sinalização (`#FF6B00`) como cor de ação, título em
+Oswald (condensada/bold) e corpo em fonte de sistema — ver
+`frontend/src/theme.js` para a paleta e os tokens compartilhados por todas as
+páginas.
 
 Stack: **FastAPI + SQLAlchemy 2.0 + Alembic + PostgreSQL** no backend,
 **React (Vite)** no frontend, autenticação por **JWT** com controle de

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import NavBar from "../../components/NavBar";
 import { apiNext as api } from "../../services/api";
+import { colors, ui } from "../../theme";
 
 const VEICULO_VAZIO = { placa: "", modelo: "", marca: "", ano: "", cor: "", km_atual: "" };
 
@@ -113,9 +114,9 @@ export default function ClienteDetail() {
 
   if (!cliente) {
     return (
-      <div style={{ fontFamily: "system-ui, sans-serif" }}>
+      <div style={ui.page}>
         <NavBar />
-        <p style={{ padding: 32, color: erro ? "#dc2626" : undefined }}>
+        <p style={{ padding: 32, color: erro ? colors.danger : undefined }}>
           {erro || "Carregando..."}
         </p>
       </div>
@@ -123,81 +124,81 @@ export default function ClienteDetail() {
   }
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif" }}>
+    <div style={ui.page}>
       <NavBar />
 
-      <div style={{ padding: "32px" }}>
-        <Link to="/clientes" style={{ fontSize: "13px", color: "#64748b" }}>
+      <div style={ui.content}>
+        <Link to="/clientes" style={{ fontSize: "13px", color: colors.textSecondary }}>
           ← voltar para clientes
         </Link>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <h1 style={{ marginTop: "8px", marginBottom: 0 }}>{cliente.nome}</h1>
-            <p style={{ color: "#334155" }}>
+            <h1 style={{ ...ui.h1, marginTop: "8px", marginBottom: 0 }}>{cliente.nome}</h1>
+            <p style={{ color: colors.textSecondary }}>
               {cliente.telefone || "-"} · {cliente.email || "-"} · {cliente.cpf_cnpj || "-"}
             </p>
-            {cliente.endereco && <p style={{ color: "#64748b" }}>{cliente.endereco}</p>}
+            {cliente.endereco && <p style={{ color: colors.textSecondary }}>{cliente.endereco}</p>}
           </div>
           {!editandoCliente && (
-            <button onClick={iniciarEdicaoCliente} style={styles.secondaryButton}>
+            <button onClick={iniciarEdicaoCliente} style={ui.secondaryButton}>
               Editar cliente
             </button>
           )}
         </div>
 
         {editandoCliente && (
-          <form onSubmit={handleSalvarCliente} style={styles.formCard}>
-            <div style={styles.formGrid}>
-              <label style={styles.label}>
+          <form onSubmit={handleSalvarCliente} style={ui.formCard}>
+            <div style={ui.formGrid}>
+              <label style={ui.label}>
                 Nome *
                 <input
                   required
-                  style={styles.input}
+                  style={ui.input}
                   value={formCliente.nome}
                   onChange={(e) => setFormCliente({ ...formCliente, nome: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Telefone
                 <input
-                  style={styles.input}
+                  style={ui.input}
                   value={formCliente.telefone}
                   onChange={(e) => setFormCliente({ ...formCliente, telefone: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 E-mail
                 <input
                   type="email"
-                  style={styles.input}
+                  style={ui.input}
                   value={formCliente.email}
                   onChange={(e) => setFormCliente({ ...formCliente, email: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 CPF/CNPJ
                 <input
-                  style={styles.input}
+                  style={ui.input}
                   value={formCliente.cpf_cnpj}
                   onChange={(e) => setFormCliente({ ...formCliente, cpf_cnpj: e.target.value })}
                 />
               </label>
-              <label style={{ ...styles.label, gridColumn: "1 / -1" }}>
+              <label style={{ ...ui.label, gridColumn: "1 / -1" }}>
                 Endereço
                 <input
-                  style={styles.input}
+                  style={ui.input}
                   value={formCliente.endereco}
                   onChange={(e) => setFormCliente({ ...formCliente, endereco: e.target.value })}
                 />
               </label>
             </div>
-            {erro && <p style={{ color: "#dc2626", fontSize: "13px" }}>{erro}</p>}
+            {erro && <p style={{ color: colors.danger, fontSize: "13px" }}>{erro}</p>}
             <div style={{ display: "flex", gap: "8px" }}>
-              <button type="submit" style={styles.primaryButton}>
+              <button type="submit" style={ui.primaryButton}>
                 Salvar alterações
               </button>
-              <button type="button" onClick={() => setEditandoCliente(false)} style={styles.secondaryButton}>
+              <button type="button" onClick={() => setEditandoCliente(false)} style={ui.secondaryButton}>
                 Cancelar
               </button>
             </div>
@@ -205,100 +206,100 @@ export default function ClienteDetail() {
         )}
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "24px" }}>
-          <h2 style={{ margin: 0, fontSize: "18px" }}>Veículos</h2>
-          <button onClick={() => setMostrarFormNovo((v) => !v)} style={styles.primaryButton}>
+          <h2 style={{ ...ui.h2, marginTop: 0 }}>Veículos</h2>
+          <button onClick={() => setMostrarFormNovo((v) => !v)} style={ui.primaryButton}>
             {mostrarFormNovo ? "Cancelar" : "+ Novo veículo"}
           </button>
         </div>
 
         {mostrarFormNovo && (
-          <form onSubmit={handleCriarVeiculo} style={styles.formCard}>
-            <div style={styles.formGrid3}>
-              <label style={styles.label}>
+          <form onSubmit={handleCriarVeiculo} style={ui.formCard}>
+            <div style={ui.formGrid3}>
+              <label style={ui.label}>
                 Placa *
                 <input
                   required
-                  style={styles.input}
+                  style={ui.input}
                   value={formNovoVeiculo.placa}
                   onChange={(e) =>
                     setFormNovoVeiculo({ ...formNovoVeiculo, placa: e.target.value.toUpperCase() })
                   }
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Modelo
                 <input
-                  style={styles.input}
+                  style={ui.input}
                   value={formNovoVeiculo.modelo}
                   onChange={(e) => setFormNovoVeiculo({ ...formNovoVeiculo, modelo: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Marca
                 <input
-                  style={styles.input}
+                  style={ui.input}
                   value={formNovoVeiculo.marca}
                   onChange={(e) => setFormNovoVeiculo({ ...formNovoVeiculo, marca: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Ano
                 <input
                   type="number"
-                  style={styles.input}
+                  style={ui.input}
                   value={formNovoVeiculo.ano}
                   onChange={(e) => setFormNovoVeiculo({ ...formNovoVeiculo, ano: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Cor
                 <input
-                  style={styles.input}
+                  style={ui.input}
                   value={formNovoVeiculo.cor}
                   onChange={(e) => setFormNovoVeiculo({ ...formNovoVeiculo, cor: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 KM atual
                 <input
                   type="number"
-                  style={styles.input}
+                  style={ui.input}
                   value={formNovoVeiculo.km_atual}
                   onChange={(e) => setFormNovoVeiculo({ ...formNovoVeiculo, km_atual: e.target.value })}
                 />
               </label>
             </div>
-            {erro && <p style={{ color: "#dc2626", fontSize: "13px" }}>{erro}</p>}
-            <button type="submit" style={styles.primaryButton}>
+            {erro && <p style={{ color: colors.danger, fontSize: "13px" }}>{erro}</p>}
+            <button type="submit" style={ui.primaryButton}>
               Salvar veículo
             </button>
           </form>
         )}
 
-        <table style={styles.table}>
+        <table style={{ ...ui.table, maxWidth: "900px", marginTop: "16px" }} className="data-table">
           <thead>
             <tr>
-              <th style={styles.th}>Placa</th>
-              <th style={styles.th}>Modelo</th>
-              <th style={styles.th}>Marca</th>
-              <th style={styles.th}>Ano</th>
-              <th style={styles.th}>Cor</th>
-              <th style={styles.th}>KM</th>
-              <th style={styles.th}></th>
+              <th style={ui.th}>Placa</th>
+              <th style={ui.th}>Modelo</th>
+              <th style={ui.th}>Marca</th>
+              <th style={ui.th}>Ano</th>
+              <th style={ui.th}>Cor</th>
+              <th style={ui.th}>KM</th>
+              <th style={ui.th}></th>
             </tr>
           </thead>
           <tbody>
             {cliente.veiculos.map((v) =>
               editandoVeiculoId === v.id ? (
                 <tr key={v.id}>
-                  <td style={styles.td} colSpan={7}>
+                  <td style={ui.td} colSpan={7}>
                     <form
                       onSubmit={(e) => handleSalvarVeiculo(e, v.id)}
                       style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}
                     >
                       <input
                         required
-                        style={{ ...styles.input, width: "100px" }}
+                        style={{ ...ui.input, width: "100px" }}
                         value={formVeiculoEdit.placa}
                         onChange={(e) =>
                           setFormVeiculoEdit({ ...formVeiculoEdit, placa: e.target.value.toUpperCase() })
@@ -306,40 +307,40 @@ export default function ClienteDetail() {
                       />
                       <input
                         placeholder="Modelo"
-                        style={{ ...styles.input, width: "120px" }}
+                        style={{ ...ui.input, width: "120px" }}
                         value={formVeiculoEdit.modelo}
                         onChange={(e) => setFormVeiculoEdit({ ...formVeiculoEdit, modelo: e.target.value })}
                       />
                       <input
                         placeholder="Marca"
-                        style={{ ...styles.input, width: "120px" }}
+                        style={{ ...ui.input, width: "120px" }}
                         value={formVeiculoEdit.marca}
                         onChange={(e) => setFormVeiculoEdit({ ...formVeiculoEdit, marca: e.target.value })}
                       />
                       <input
                         type="number"
                         placeholder="Ano"
-                        style={{ ...styles.input, width: "80px" }}
+                        style={{ ...ui.input, width: "80px" }}
                         value={formVeiculoEdit.ano}
                         onChange={(e) => setFormVeiculoEdit({ ...formVeiculoEdit, ano: e.target.value })}
                       />
                       <input
                         placeholder="Cor"
-                        style={{ ...styles.input, width: "90px" }}
+                        style={{ ...ui.input, width: "90px" }}
                         value={formVeiculoEdit.cor}
                         onChange={(e) => setFormVeiculoEdit({ ...formVeiculoEdit, cor: e.target.value })}
                       />
                       <input
                         type="number"
                         placeholder="KM"
-                        style={{ ...styles.input, width: "100px" }}
+                        style={{ ...ui.input, width: "100px" }}
                         value={formVeiculoEdit.km_atual}
                         onChange={(e) => setFormVeiculoEdit({ ...formVeiculoEdit, km_atual: e.target.value })}
                       />
-                      <button type="submit" style={styles.primaryButton}>
+                      <button type="submit" style={ui.primaryButton}>
                         Salvar
                       </button>
-                      <button type="button" onClick={() => setEditandoVeiculoId(null)} style={styles.secondaryButton}>
+                      <button type="button" onClick={() => setEditandoVeiculoId(null)} style={ui.secondaryButton}>
                         Cancelar
                       </button>
                     </form>
@@ -347,14 +348,14 @@ export default function ClienteDetail() {
                 </tr>
               ) : (
                 <tr key={v.id}>
-                  <td style={styles.td}>{v.placa}</td>
-                  <td style={styles.td}>{v.modelo || "-"}</td>
-                  <td style={styles.td}>{v.marca || "-"}</td>
-                  <td style={styles.td}>{v.ano || "-"}</td>
-                  <td style={styles.td}>{v.cor || "-"}</td>
-                  <td style={styles.td}>{v.km_atual ?? "-"}</td>
-                  <td style={styles.td}>
-                    <button onClick={() => iniciarEdicaoVeiculo(v)} style={styles.linkButton}>
+                  <td style={ui.td}>{v.placa}</td>
+                  <td style={ui.td}>{v.modelo || "-"}</td>
+                  <td style={ui.td}>{v.marca || "-"}</td>
+                  <td style={ui.td}>{v.ano || "-"}</td>
+                  <td style={ui.td}>{v.cor || "-"}</td>
+                  <td style={ui.td}>{v.km_atual ?? "-"}</td>
+                  <td style={ui.td}>
+                    <button onClick={() => iniciarEdicaoVeiculo(v)} style={ui.linkButton}>
                       editar
                     </button>
                   </td>
@@ -363,7 +364,7 @@ export default function ClienteDetail() {
             )}
             {cliente.veiculos.length === 0 && (
               <tr>
-                <td style={styles.td} colSpan={7}>
+                <td style={ui.td} colSpan={7}>
                   Nenhum veículo cadastrado para este cliente.
                 </td>
               </tr>
@@ -374,67 +375,3 @@ export default function ClienteDetail() {
     </div>
   );
 }
-
-const styles = {
-  primaryButton: {
-    padding: "8px 14px",
-    borderRadius: "6px",
-    border: "none",
-    background: "#0f172a",
-    color: "#fff",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  secondaryButton: {
-    padding: "8px 14px",
-    borderRadius: "6px",
-    border: "1px solid #cbd5e1",
-    background: "#fff",
-    color: "#334155",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  linkButton: {
-    border: "none",
-    background: "none",
-    color: "#2563eb",
-    cursor: "pointer",
-    fontSize: "13px",
-    textDecoration: "underline",
-    padding: 0,
-  },
-  formCard: {
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    borderRadius: "10px",
-    padding: "20px",
-    marginTop: "16px",
-    maxWidth: "600px",
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginBottom: "12px",
-  },
-  formGrid3: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "12px",
-    marginBottom: "12px",
-  },
-  label: { fontSize: "13px", color: "#334155" },
-  input: {
-    display: "block",
-    width: "100%",
-    padding: "8px 10px",
-    marginTop: "4px",
-    borderRadius: "6px",
-    border: "1px solid #cbd5e1",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  },
-  table: { width: "100%", borderCollapse: "collapse", maxWidth: "900px", marginTop: "16px" },
-  th: { textAlign: "left", borderBottom: "2px solid #e2e8f0", padding: "8px", fontSize: "13px" },
-  td: { borderBottom: "1px solid #f1f5f9", padding: "8px", fontSize: "14px" },
-};

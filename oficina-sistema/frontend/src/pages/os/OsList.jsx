@@ -4,6 +4,7 @@ import NavBar from "../../components/NavBar";
 import StatusBadge from "../../components/StatusBadge";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
+import { colors, ui } from "../../theme";
 import { NOMES_STATUS } from "./statusUtils";
 
 const PODE_CRIAR = ["admin", "financeiro", "recepcao"];
@@ -76,27 +77,27 @@ export default function OsList() {
   }
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif" }}>
+    <div style={ui.page}>
       <NavBar />
 
-      <div style={{ padding: "32px" }}>
+      <div style={ui.content}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={{ marginTop: 0 }}>Ordens de Serviço</h1>
+          <h1 style={ui.h1}>Ordens de Serviço</h1>
           {podeCriar && (
-            <button onClick={() => setMostrarForm((v) => !v)} style={styles.primaryButton}>
+            <button onClick={() => setMostrarForm((v) => !v)} style={ui.primaryButton}>
               {mostrarForm ? "Cancelar" : "+ Nova OS"}
             </button>
           )}
         </div>
 
         {mostrarForm && (
-          <form onSubmit={handleCriar} style={styles.formCard}>
-            <div style={styles.formGrid}>
-              <label style={styles.label}>
+          <form onSubmit={handleCriar} style={ui.formCard}>
+            <div style={ui.formGrid}>
+              <label style={ui.label}>
                 Cliente *
                 <select
                   required
-                  style={styles.input}
+                  style={ui.input}
                   value={form.cliente_id}
                   onChange={(e) => handleClienteChange(e.target.value)}
                 >
@@ -108,12 +109,12 @@ export default function OsList() {
                   ))}
                 </select>
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Veículo *
                 <select
                   required
                   disabled={!form.cliente_id}
-                  style={styles.input}
+                  style={ui.input}
                   value={form.veiculo_id}
                   onChange={(e) => setForm({ ...form, veiculo_id: e.target.value })}
                 >
@@ -125,27 +126,27 @@ export default function OsList() {
                   ))}
                 </select>
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Prazo estimado
                 <input
                   type="date"
-                  style={styles.input}
+                  style={ui.input}
                   value={form.prazo_estimado}
                   onChange={(e) => setForm({ ...form, prazo_estimado: e.target.value })}
                 />
               </label>
-              <label style={styles.label}>
+              <label style={ui.label}>
                 Forma de pagamento
                 <input
                   placeholder="à vista, cartão, parcelado..."
-                  style={styles.input}
+                  style={ui.input}
                   value={form.forma_pagamento}
                   onChange={(e) => setForm({ ...form, forma_pagamento: e.target.value })}
                 />
               </label>
             </div>
-            {erro && <p style={{ color: "#dc2626", fontSize: "13px" }}>{erro}</p>}
-            <button type="submit" style={styles.primaryButton}>
+            {erro && <p style={{ color: colors.danger, fontSize: "13px" }}>{erro}</p>}
+            <button type="submit" style={ui.primaryButton}>
               Criar OS
             </button>
           </form>
@@ -155,7 +156,7 @@ export default function OsList() {
           <select
             value={statusFiltro}
             onChange={(e) => setStatusFiltro(e.target.value)}
-            style={{ ...styles.input, width: "220px" }}
+            style={{ ...ui.input, width: "220px" }}
           >
             <option value="">Todos os status</option>
             {Object.entries(NOMES_STATUS).map(([valor, nome]) => (
@@ -169,35 +170,37 @@ export default function OsList() {
         {carregando ? (
           <p>Carregando...</p>
         ) : (
-          <table style={styles.table}>
+          <table style={{ ...ui.table, maxWidth: "900px" }} className="data-table">
             <thead>
               <tr>
-                <th style={styles.th}>OS</th>
-                <th style={styles.th}>Cliente</th>
-                <th style={styles.th}>Veículo</th>
-                <th style={styles.th}>Status</th>
-                <th style={styles.th}>Valor total</th>
-                <th style={styles.th}></th>
+                <th style={ui.th}>OS</th>
+                <th style={ui.th}>Cliente</th>
+                <th style={ui.th}>Veículo</th>
+                <th style={ui.th}>Status</th>
+                <th style={ui.th}>Valor total</th>
+                <th style={ui.th}></th>
               </tr>
             </thead>
             <tbody>
               {ordens.map((os) => (
                 <tr key={os.id}>
-                  <td style={styles.td}>#{os.numero}</td>
-                  <td style={styles.td}>{os.cliente.nome}</td>
-                  <td style={styles.td}>{os.veiculo.placa}</td>
-                  <td style={styles.td}>
+                  <td style={ui.td}>#{os.numero}</td>
+                  <td style={ui.td}>{os.cliente.nome}</td>
+                  <td style={ui.td}>{os.veiculo.placa}</td>
+                  <td style={ui.td}>
                     <StatusBadge status={os.status} />
                   </td>
-                  <td style={styles.td}>R$ {os.valor_total}</td>
-                  <td style={styles.td}>
-                    <Link to={`/os/${os.id}`}>ver detalhes</Link>
+                  <td style={ui.td}>R$ {os.valor_total}</td>
+                  <td style={ui.td}>
+                    <Link to={`/os/${os.id}`} style={{ color: colors.accent }}>
+                      ver detalhes
+                    </Link>
                   </td>
                 </tr>
               ))}
               {ordens.length === 0 && (
                 <tr>
-                  <td style={styles.td} colSpan={6}>
+                  <td style={ui.td} colSpan={6}>
                     Nenhuma ordem de serviço encontrada.
                   </td>
                 </tr>
@@ -209,43 +212,3 @@ export default function OsList() {
     </div>
   );
 }
-
-const styles = {
-  primaryButton: {
-    padding: "8px 14px",
-    borderRadius: "6px",
-    border: "none",
-    background: "#0f172a",
-    color: "#fff",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  formCard: {
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    borderRadius: "10px",
-    padding: "20px",
-    marginTop: "16px",
-    maxWidth: "600px",
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginBottom: "12px",
-  },
-  label: { fontSize: "13px", color: "#334155" },
-  input: {
-    display: "block",
-    width: "100%",
-    padding: "8px 10px",
-    marginTop: "4px",
-    borderRadius: "6px",
-    border: "1px solid #cbd5e1",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  },
-  table: { width: "100%", borderCollapse: "collapse", maxWidth: "900px" },
-  th: { textAlign: "left", borderBottom: "2px solid #e2e8f0", padding: "8px", fontSize: "13px" },
-  td: { borderBottom: "1px solid #f1f5f9", padding: "8px", fontSize: "14px" },
-};
