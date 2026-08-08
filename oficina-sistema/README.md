@@ -300,7 +300,7 @@ Peças novas da arquitetura:
 | 3 | Clientes e Veículos | ✅ |
 | 4 | Estoque (com RPC de concorrência) | ✅ |
 | 5 | Ordens de Serviço (com upload de fotos no Storage) | ✅ |
-| 6 | Financeiro completo | pendente |
+| 6 | Financeiro completo | ✅ |
 | 7 | Relatórios Gerais | pendente |
 
 Cada etapa é validada de ponta a ponta (não só "a lógica parece igual")
@@ -381,6 +381,51 @@ deploy):
   no deploy; confirmado com `GET /api/clientes` e `POST
   /api/ordens-servico` reais retornando 200/201 antes de seguir com a
   prova de concorrência.
+
+**Etapa 6 — Financeiro completo**: o ponto crítico aqui é o fechamento de
+folha de pagamento (`fechar_folha`, RPC do Supabase) — a nota original em
+`app/services/folha.py` já exigia explicitamente que reprocessar não pode
+gerar comissão nem `contas_pagar` duplicada. A técnica é a mesma família
+de lock das etapas anteriores (`SELECT ... FOR UPDATE` na linha da
+folha), provada com corrida real via `pg_net` contra produção:
+- 2 requisições concorrentes tentando fechar a **mesma folha** (com uma
+  comissão de R$50 e um desconto de R$300 pendentes de fechamento):
+  exatamente 1 sucesso (200, `valor_liquido: 1750`) + 1 bloqueio (400,
+  `"Folha já está 'fechado' — fechamento não pode ser reprocessado"`).
+  Conferido direto no banco depois: exatamente **1** linha em
+  `contas_pagar` (não 2) e a comissão vinculada a **exatamente 1** folha
+  (`folha_id` setado uma única vez) — nenhuma duplicata apesar da corrida
+  genuína.
+- Mesmo padrão testado em `marcar_conta_pagar_paga`/`marcar_conta_receber_recebida`
+  (segunda tentativa de pagar/receber a mesma conta bloqueada com 400) e
+  `pagar_folha` (só aceita folha `fechado`; conta_pagar vinculada também
+  vira `pago` automaticamente).
+- Validação funcional completa contra produção: contas a pagar (criar,
+  editar — só enquanto pendente/atrasado —, marcar paga, status
+  `atrasado` recalculado automaticamente antes de cada listagem), contas
+  a receber (marcar recebida), metas de orçamento (unicidade por
+  categoria+mês), e os 6 dashboards (DRE, ponto de equilíbrio, evolução
+  mensal, orçado x realizado, despesas por categoria, fluxo de caixa) —
+  todos com números conferidos manualmente contra os dados reais
+  gravados (DRE: receita 7200, custo peças 1950, comissões 90, despesas
+  fixas 5875,50, margem 5160, lucro -715,50; ponto de equilíbrio:
+  margem 71,67% ⇒ PE R$8.197,99). RLS conferida: recepção bloqueada de
+  `/api/financeiro/*`, mecânico bloqueado de `/api/folha` (403 nos dois
+  casos).
+- **Bug real encontrado e corrigido durante a validação**: as três rotas
+  de dashboard que dependem do DRE (`dre`, `ponto-equilibrio`,
+  `evolucao-mensal`) devolviam 500 em produção. Causa: a função auxiliar
+  `_dre_periodo` referenciava uma CTE (`WITH os_periodo AS (...)`) em
+  duas instruções SQL separadas dentro do mesmo corpo da função — CTEs em
+  Postgres só existem dentro do statement que as declara, não sobrevivem
+  entre instruções diferentes na mesma função `plpgsql`. Corrigido
+  substituindo a CTE por um array (`bigint[]`) guardado numa variável,
+  reutilizado nas duas queries seguintes. Confirmado chamando a RPC
+  diretamente (reproduziu o erro exato `relation "os_periodo" does not
+  exist`) antes e depois da correção, e depois via `GET` real nas três
+  rotas.
+- Dados de teste (funcionário, OS, folha, conta manual, meta) e as
+  extensões (`http`, `pg_net`) foram removidos do banco depois.
 
 ## Como rodar (Docker Compose — recomendado)
 
