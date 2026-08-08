@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import NavBar from "../../components/NavBar";
-import api from "../../services/api";
+import { apiNext as api } from "../../services/api";
 import { styles } from "./financeiroStyles";
 
 const STATUS_LABEL = { pendente: "Pendente", recebido: "Recebido", atrasado: "Atrasado" };
