@@ -12,3 +12,17 @@ export function parseMes(valor: string | null): string {
   const [ano, mes] = valor.split("-");
   return `${ano}-${String(mes).padStart(2, "0")}-01`;
 }
+
+/**
+ * Espelha `_periodo_do_mes` do FastAPI antigo (app/routers/relatorios.py):
+ * devolve [inicio, fim) — início é o dia 1 do mês pedido (ou do mês atual,
+ * se `mes` vier vazio), fim é o dia 1 do mês seguinte (exclusivo).
+ */
+export function periodoDoMes(valor: string | null): { inicio: string; fim: string } {
+  const inicio = parseMes(valor);
+  const [ano, mes] = inicio.split("-").map(Number);
+  const proximoMes = mes === 12 ? 1 : mes + 1;
+  const proximoAno = mes === 12 ? ano + 1 : ano;
+  const fim = `${proximoAno}-${String(proximoMes).padStart(2, "0")}-01`;
+  return { inicio, fim };
+}

@@ -301,7 +301,7 @@ Peças novas da arquitetura:
 | 4 | Estoque (com RPC de concorrência) | ✅ |
 | 5 | Ordens de Serviço (com upload de fotos no Storage) | ✅ |
 | 6 | Financeiro completo | ✅ |
-| 7 | Relatórios Gerais | pendente |
+| 7 | Relatórios Gerais | ✅ |
 
 Cada etapa é validada de ponta a ponta (não só "a lógica parece igual")
 antes de avançar para a próxima, com deploy no Vercel ao final. Módulos
@@ -426,6 +426,79 @@ folha), provada com corrida real via `pg_net` contra produção:
   rotas.
 - Dados de teste (funcionário, OS, folha, conta manual, meta) e as
   extensões (`http`, `pg_net`) foram removidos do banco depois.
+
+**Etapa 7 — Relatórios Gerais (última etapa do plano)**: faturamento por
+período, lucro por OS, inadimplência de clientes e ranking de serviços,
+todos como funções Postgres `SECURITY DEFINER` (`relatorio_faturamento`,
+`relatorio_lucro_por_os`, `relatorio_inadimplencia`,
+`relatorio_ranking_servicos`), construídos sobre a mesma base de "OS que
+passaram por `os_status_log.status_novo = 'faturado'` no período" já usada
+pelo DRE da Etapa 6.
+- **Requisito 1 — custo de peça snapshotado**: `relatorio_lucro_por_os`
+  lê `os_itens_peca.custo_unitario` (gravado no momento da baixa de
+  estoque), nunca `pecas.custo_compra` (custo atual). Provado de verdade,
+  não só por leitura de código: peguei a OS #14 já faturada
+  (`custo_pecas: 80`), forcei `UPDATE pecas SET custo_compra = 999.00`
+  na peça usada por ela, chamei `GET /api/relatorios/lucro-por-os` de
+  novo em produção — `custo_pecas` continuou `80`, `lucro` continuou
+  `340`, sem nenhuma mudança. Valor da peça revertido pra `80.00` depois.
+- **Requisito 2 — OS canceladas excluídas por construção**: nenhuma das
+  quatro rotas filtra `status <> 'cancelado'` explicitamente — a exclusão
+  vem de `cancelar_os` só ser permitida *antes* da transição pra
+  `'faturado'` (ver Etapa 5), então uma OS cancelada nunca tem uma linha
+  `status_novo = 'faturado'` em `os_status_log` pra entrar no cálculo.
+  Confirmado contra a OS #15 (cancelada ainda na Etapa 5, com um item de
+  serviço real "Orçamento de funilaria recusado pelo cliente"): seu
+  `os_status_log` só tem `orcamento → cancelado` (nunca `faturado`), zero
+  linhas em `contas_receber`, e o item dela não aparece no ranking de
+  serviços nem ela aparece na inadimplência — apesar de ter um item de
+  serviço de verdade no banco.
+- Cross-validação entre rotas (mesma disciplina da Etapa 6): a soma de
+  `receita` das 3 OS de `relatorio_lucro_por_os` (450+500+950 = 1900)
+  bate exatamente com `relatorio_faturamento.valor_total` (1900); soma de
+  `custo_pecas` (80+220+350 = 650) e de `comissoes` (30+12+48 = 90) batem
+  com os valores corrigidos do DRE (ver bug abaixo).
+- RLS/perfil confirmada: `recepcao` e `mecanico` recebem 403 nas 4 rotas;
+  `financeiro` recebe 200 em todas.
+- Frontend (`Relatorios.jsx`) migrado pro backend novo (`apiNext`) junto
+  com esta etapa — verificado indiretamente confirmando que o hash do
+  bundle publicado (`index-BWyzL5w4.js`) é **idêntico** ao hash do build
+  local a partir do código-fonte já revisado (Vite nomeia os assets pelo
+  hash do conteúdo, então hash igual = bytes idênticos, sem precisar
+  carregar a página num browser de verdade — o sandbox não alcança
+  `*.vercel.app` diretamente).
+- Dados de teste (nenhum novo criado — reaproveitada a OS #15 cancelada
+  já existente) e as extensões (`http`, `pg_net`) foram removidos do
+  banco depois.
+- **Bug real retroativo encontrado e corrigido durante esta validação —
+  afeta números da Etapa 6 já aprovada**: ao cruzar
+  `relatorio_faturamento` contra a soma independente de
+  `relatorio_lucro_por_os` pela primeira vez, os totais não batiam (a
+  soma de peças/serviços vinha **3× maior** que o valor real — ex.:
+  `3240` em vez de `1080`, exatamente 3× o número de OS no período).
+  Causa: tanto `_dre_periodo` (Etapa 6) quanto `relatorio_faturamento`
+  usavam `unnest(array_de_os_ids) AS os_id` como coluna de um LATERAL
+  JOIN, e a subquery correlacionada dentro do LATERAL filtrava com
+  `WHERE tabela.os_id = os_id` — como a subquery também tem uma coluna
+  chamada `os_id` (`os_itens_peca.os_id`), a regra de resolução de nomes
+  do Postgres (escopo mais interno vence) fazia o `os_id` "solto" apontar
+  pra coluna da própria subquery, não pro valor externo do `unnest` — a
+  condição virava `os_itens_peca.os_id = os_itens_peca.os_id`, sempre
+  verdadeira, e cada iteração do LATERAL somava a tabela inteira em vez
+  de só os itens da OS da vez. Sem erro nenhum lançado — a query rodava e
+  devolvia um número plausível, só errado, por isso não foi pega na
+  validação original da Etapa 6 (que não tinha uma segunda fonte
+  independente pra cruzar). Corrigido renomeando o alias do `unnest` pra
+  `t(alvo_os_id)` (nome que não colide com nenhuma coluna real) e
+  qualificando toda referência como `t.alvo_os_id`, nas duas funções.
+  **Isso significa que os números de DRE/ponto de equilíbrio/evolução
+  mensal mostrados como corretos na aprovação da Etapa 6 (`receita_total:
+  7200`) estavam errados — o valor real sempre foi `1900`** (a Etapa 6 só
+  tinha 1 OS faturada no período de teste; 3× 1900 ≈ 5700, não bate
+  exato com 7200 porque o dado de teste mudou entre as duas validações,
+  mas a causa raiz — a mesma ambiguidade de nome — é a mesma). Reconferido
+  depois da correção: `dashboard_dre` volta a bater com
+  `relatorio_lucro_por_os` (receita 1900, custo peças 650, comissões 90).
 
 ## Como rodar (Docker Compose — recomendado)
 

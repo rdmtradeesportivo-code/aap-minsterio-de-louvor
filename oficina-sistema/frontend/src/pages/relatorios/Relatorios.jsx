@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import NavBar from "../../components/NavBar";
-import api from "../../services/api";
+import { apiNext as api } from "../../services/api";
 import { styles } from "../financeiro/financeiroStyles";
 
 function mesAtualCurto() {
